@@ -53,11 +53,11 @@ namespace timw255.Sitefinity.ImageOptimization.Configuration
             
             imageOptimizerElement = new ImageOptimizerSettings(this.Optimizers)
             {
-                Description = "Image optimizer that uses the Kraken.io image service",
-                Enabled = true,
                 Name = "KrakenIOImageOptimizer",
-                ProviderType = typeof(KrakenIOImageOptimizer),
-                Title = "KrakenIO Image Optimizer"
+                Title = "KrakenIO Image Optimizer",
+                Description = "Image optimizer that uses the Kraken.io image service",
+                OptimizerType = typeof(KrakenIOImageOptimizer),
+                Enabled = true
             };
 
             imageOptimizerElement.Parameters.Add("apiKey", "");
@@ -66,21 +66,20 @@ namespace timw255.Sitefinity.ImageOptimization.Configuration
             imageOptimizerElement.Parameters.Add("callbackURL", "http://www.yoursite.com/api/Optimization");
             imageOptimizerElement.Parameters.Add("useLossyOptimization", "False");
 
-            this.Optimizers.Add("ImageMagick", imageOptimizerElement);
+            this.Optimizers.Add("KrakenIOImageOptimizer", imageOptimizerElement);
 
             imageOptimizerElement = new ImageOptimizerSettings(this.Optimizers)
             {
-                Description = "Image optimizer that uses ImageMagick image for image optimization",
-                Enabled = true,
                 Name = "ImageMagickImageOptimizer",
-                Parameters = null,
-                ProviderType = typeof(ImageMagickImageOptimizer),
-                Title = "Image Magick Image Optimizer"
+                Title = "Image Magick Image Optimizer",
+                Description = "Image optimizer that uses ImageMagick image for image optimization",
+                OptimizerType = typeof(ImageMagickImageOptimizer),
+                Enabled = true
             };
 
             imageOptimizerElement.Parameters.Add("imageQuality", "90");
 
-            this.Optimizers.Add("ImageMagick", imageOptimizerElement);
+            this.Optimizers.Add("ImageMagickImageOptimizer", imageOptimizerElement);
         }
     }
 }

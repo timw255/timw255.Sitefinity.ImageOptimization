@@ -5,7 +5,7 @@
 
         jQuery.ajax({
             type: "POST",
-            url: sender._baseUrl + "api/Optimization/" + args._dataItem.Id,
+            url: sender._baseUrl + "ImageOptimization/Optimization/" + args._dataItem.Id,
             contentType: "application/json; charset=utf-8",
             dataType: "json",
             processdata: false,

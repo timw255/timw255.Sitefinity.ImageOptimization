@@ -14,6 +14,32 @@ namespace timw255.Sitefinity.ImageOptimization.Configuration
 {
     public class ImageOptimizerSettings : ConfigElement
     {
+        [ConfigurationProperty("name", IsKey = true, IsRequired = true, DefaultValue = "")]
+        public string Name
+        {
+            get
+            {
+                return (string)this["name"];
+            }
+            set
+            {
+                this["name"] = value;
+            }
+        }
+
+        [ConfigurationProperty("title")]
+        public string Title
+        {
+            get
+            {
+                return (string)this["title"];
+            }
+            set
+            {
+                this["title"] = value;
+            }
+        }
+
         [ConfigurationProperty("description", DefaultValue="")]
         public string Description
         {
@@ -27,7 +53,33 @@ namespace timw255.Sitefinity.ImageOptimization.Configuration
             }
         }
 
-        [ConfigurationProperty("enabled", DefaultValue=true)]
+        [ConfigurationProperty("type", IsRequired=true, IsKey=false)]
+        [TypeConverter(typeof(StringTypeConverter))]
+        public Type OptimizerType
+        {
+            get
+            {
+                Type item = (Type)this["type"];
+                if (item == null && !string.IsNullOrEmpty(this.OptimizerTypeName))
+                {
+                    item = TypeResolutionService.ResolveType(this.OptimizerTypeName);
+                    this["type"] = item;
+                }
+                return item;
+            }
+            set
+            {
+                this["type"] = value;
+            }
+        }
+
+        internal string OptimizerTypeName
+        {
+            get;
+            set;
+        }
+
+        [ConfigurationProperty("enabled", DefaultValue = true)]
         public bool Enabled
         {
             get
@@ -37,19 +89,6 @@ namespace timw255.Sitefinity.ImageOptimization.Configuration
             set
             {
                 this["enabled"] = value;
-            }
-        }
-
-        [ConfigurationProperty("name", IsKey=true, IsRequired=true, DefaultValue="")]
-        public string Name
-        {
-            get
-            {
-                return (string)this["name"];
-            }
-            set
-            {
-                this["name"] = value;
             }
         }
 
@@ -63,45 +102,6 @@ namespace timw255.Sitefinity.ImageOptimization.Configuration
             set
             {
                 this["parameters"] = value;
-            }
-        }
-
-        [ConfigurationProperty("type", IsRequired=true, IsKey=false)]
-        [TypeConverter(typeof(StringTypeConverter))]
-        public Type ProviderType
-        {
-            get
-            {
-                Type item = (Type)this["type"];
-                if (item == null && !string.IsNullOrEmpty(this.ProviderTypeName))
-                {
-                    item = TypeResolutionService.ResolveType(this.ProviderTypeName);
-                    this["type"] = item;
-                }
-                return item;
-            }
-            set
-            {
-                this["type"] = value;
-            }
-        }
-
-        internal string ProviderTypeName
-        {
-            get;
-            set;
-        }
-
-        [ConfigurationProperty("title")]
-        public string Title
-        {
-            get
-            {
-                return (string)this["title"];
-            }
-            set
-            {
-                this["title"] = value;
             }
         }
 

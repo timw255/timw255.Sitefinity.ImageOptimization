@@ -142,6 +142,7 @@ namespace timw255.Sitefinity.ImageOptimization
             // Add your uninstall logic here
 
             this.UninstallActionMenuItems(initializer);
+            this.UninstallBackendScripts(initializer);
         }
 
         private void UninstallActionMenuItems(SiteInitializer initializer)
@@ -179,7 +180,7 @@ namespace timw255.Sitefinity.ImageOptimization
             var scripts = albumsBackendList.Scripts;
 
             ClientScriptElement scriptElement;
-            if (!(scripts.TryGetValue(scriptLocation, out scriptElement) && scriptElement.ScriptLocation == scriptLocation))
+            if (scripts.TryGetValue(scriptLocation, out scriptElement))
             {
                 scripts.Remove(scriptElement);
 
@@ -383,7 +384,7 @@ namespace timw255.Sitefinity.ImageOptimization
             var scripts = albumsBackendList.Scripts;
 
             ClientScriptElement scriptElement;
-            if (!(scripts.TryGetValue(scriptLocation, out scriptElement) && scriptElement.ScriptLocation == scriptLocation))
+            if (!scripts.TryGetValue(scriptLocation, out scriptElement))
             {
                 var newClientScript = new ClientScriptElement(scripts);
 
@@ -439,7 +440,7 @@ namespace timw255.Sitefinity.ImageOptimization
         #region Private members & constants
         public const string ModuleName = "ImageOptimization";
         internal const string ModuleTitle = "Image Optimization";
-        internal const string ModuleDescription = "This is a Custom Module which has been built with Sitefinity Thunder.";
+        internal const string ModuleDescription = "Optimize images in Sitefinity albums";
         internal const string ModuleVirtualPath = "~/ImageOptimization/";
         #endregion
     }

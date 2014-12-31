@@ -469,7 +469,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Resources\AlbumExtensions.js" />
+    <EmbeddedResource Include="Resources\AlbumExtensions.js" />
     <Content Include="Web\Scripts\readme.txt" />
     <Content Include="Web\Services\readme.txt" />
     <Content Include="Web\UI\readme.txt" />
