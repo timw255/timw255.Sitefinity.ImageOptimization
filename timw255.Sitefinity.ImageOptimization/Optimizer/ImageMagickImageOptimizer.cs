@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http.Formatting;
 using System.Text;
 using System.Threading.Tasks;
 using Telerik.Sitefinity.Configuration;
@@ -14,8 +15,6 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
     public class ImageMagickImageOptimizer : IImageOptimizer
     {
         private ImageOptimizationConfig _config;
-
-        public Guid AlbumId { get; set; }
 
         public ImageMagickImageOptimizer()
         {
@@ -65,6 +64,11 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
                 optimizedFilename = image.FilePath;
                 return compressed;
             }
+        }
+
+        public Stream ProcessCallback(object data, out Guid albumId, out Guid imageId, out string optimizedExtension)
+        {
+            throw new NotImplementedException();
         }
     }
 }

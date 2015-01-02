@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http.Formatting;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Telerik.Sitefinity.Configuration;
 using Telerik.Sitefinity.Libraries.Model;
@@ -11,7 +13,7 @@ using timw255.Sitefinity.ImageOptimization.Configuration;
 
 namespace timw255.Sitefinity.ImageOptimization.Optimizer
 {
-    public class KrakenIOImageOptimizer : IImageOptimizer
+    public class KrakenImageOptimizer : IImageOptimizer
     {
         private ImageOptimizationConfig _config;
 
@@ -23,13 +25,11 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
         private string _callbackUrl;
         private bool _useLossy;
 
-        public Guid AlbumId { get; set; }
-
-        public KrakenIOImageOptimizer()
+        public KrakenImageOptimizer()
         {
             _config = Config.Get<ImageOptimizationConfig>();
 
-            var settings = _config.Optimizers["KrakenIOImageOptimizer"].Parameters;
+            var settings = _config.Optimizers["KrakenImageOptimizer"].Parameters;
 
             _key = settings["apiKey"];
             _secret = settings["apiSecret"];
@@ -61,7 +61,7 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
 
             if (_useCallbacks)
             {
-                Kraken.KrakenCallbackIds.Add(response.Id, AlbumId);
+                Kraken.KrakenCallbackIds.Add(response.Id, image.Album.Id);
 
                 optimizedExtension = "";
                 return null;
@@ -81,6 +81,53 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
                     optimizedExtension = Path.GetExtension(response.KrakedUrl);
                     return stream;
                 }
+            }
+        }
+
+        public Stream ProcessCallback(object data, out Guid imageId, out Guid albumId, out string optimizedExtension)
+        {
+            FormDataCollection kCallbackFormData = data as FormDataCollection;
+
+            string krakenCallbackId = kCallbackFormData.Get("id");
+
+            if (!Kraken.KrakenCallbackIds.ContainsKey(krakenCallbackId))
+            {
+                albumId = Guid.Empty;
+                imageId = Guid.Empty;
+                optimizedExtension = null;
+                return null;
+            }
+
+            string fileName = kCallbackFormData.Get("file_name");
+            string krakedUrl = kCallbackFormData.Get("kraked_url");
+            bool success = Boolean.Parse(kCallbackFormData.Get("success"));
+            string error = kCallbackFormData.Get("error");
+
+            Kraken.KrakenCallbackIds.Remove(krakenCallbackId);
+
+            if (success == false || error != null)
+            {
+                albumId = Guid.Empty;
+                imageId = Guid.Empty;
+                optimizedExtension = null;
+                return null;
+            }
+
+            imageId = Guid.Parse(Path.GetFileNameWithoutExtension(krakedUrl));
+            albumId = Kraken.KrakenCallbackIds[krakenCallbackId];
+
+            if (!Regex.IsMatch(krakedUrl, @"https?://(?:api-worker-\d|dl).kraken.io/" + krakenCallbackId + "/" + imageId.ToString() + @"\.(?:jpg|jpeg|png|gif|svg)"))
+            {
+                albumId = Guid.Empty;
+                imageId = Guid.Empty;
+                optimizedExtension = null;
+                return null;
+            }
+
+            using (var webClient = new WebClient())
+            {
+                optimizedExtension = Path.GetExtension(fileName);
+                return webClient.OpenRead(krakedUrl);
             }
         }
     }

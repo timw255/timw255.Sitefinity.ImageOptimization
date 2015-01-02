@@ -18,7 +18,7 @@ using timw255.Sitefinity.ImageOptimization.Optimizer;
 
 namespace timw255.Sitefinity.ImageOptimization.Tasks
 {
-    class AlbumOptimizationTask : ScheduledTask
+    public class AlbumOptimizationTask : ScheduledTask
     {
         private int _itemsCount;
 
@@ -57,7 +57,6 @@ namespace timw255.Sitefinity.ImageOptimization.Tasks
             var optimizerSettings = imageOptimizationConfig.Optimizers[imageOptimizationConfig.DefaultOptimizer];
 
             IImageOptimizer imageOptimizer = (IImageOptimizer)Activator.CreateInstance(optimizerSettings.OptimizerType.Assembly.FullName, optimizerSettings.OptimizerType.FullName).Unwrap();
-            imageOptimizer.AlbumId = this.AlbumId;
 
             LibrariesManager _librariesManager = LibrariesManager.GetManager();
             Album album = _librariesManager.GetAlbum(this.AlbumId);
@@ -80,8 +79,8 @@ namespace timw255.Sitefinity.ImageOptimization.Tasks
                     imageData.CopyTo(ms);
                     ms.Seek(0, SeekOrigin.Begin);
 
-                    string optimizedFileName;
-                    Stream optimizedImage = imageOptimizer.OptimizeImage(image, ms, out optimizedFileName);
+                    string optimizedExtension;
+                    Stream optimizedImage = imageOptimizer.OptimizeImage(image, ms, out optimizedExtension);
 
                     // There are different reasons why the optimizer would return null.
                     // 1. An error occured (in which case the optimizer should throw or handle the exception)
@@ -92,7 +91,7 @@ namespace timw255.Sitefinity.ImageOptimization.Tasks
                         Image temp = _librariesManager.Lifecycle.CheckOut(image) as Image;
 
                         // Make the modifications to the temp version.
-                        _librariesManager.Upload(temp, optimizedImage, Path.GetExtension(optimizedFileName));
+                        _librariesManager.Upload(temp, optimizedImage, Path.GetExtension(optimizedExtension));
                         temp.SetValue("Optimized", true);
 
                         // Checkin the temp and get the updated master version.

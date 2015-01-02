@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web.Http;
 using System.Web.Routing;
+using System.Web.UI;
 using Telerik.Microsoft.Practices.Unity;
 using Telerik.Sitefinity;
 using Telerik.Sitefinity.Abstractions;
@@ -13,17 +14,23 @@ using Telerik.Sitefinity.Abstractions.VirtualPath;
 using Telerik.Sitefinity.Abstractions.VirtualPath.Configuration;
 using Telerik.Sitefinity.Configuration;
 using Telerik.Sitefinity.Data;
+using Telerik.Sitefinity.Data.Events;
 using Telerik.Sitefinity.Data.Metadata;
 using Telerik.Sitefinity.Fluent.Modules;
 using Telerik.Sitefinity.Fluent.Modules.Toolboxes;
 using Telerik.Sitefinity.GenericContent.Model;
 using Telerik.Sitefinity.Libraries.Model;
 using Telerik.Sitefinity.Lifecycle;
+using Telerik.Sitefinity.Model;
 using Telerik.Sitefinity.Modules.Libraries;
 using Telerik.Sitefinity.Modules.Libraries.Configuration;
 using Telerik.Sitefinity.Modules.Pages.Configuration;
+using Telerik.Sitefinity.Security.Claims;
 using Telerik.Sitefinity.Services;
 using Telerik.Sitefinity.Web.UI;
+using Telerik.Sitefinity.Web.UI.Backend.Elements.Config;
+using Telerik.Sitefinity.Web.UI.Backend.Elements.Enums;
+using Telerik.Sitefinity.Web.UI.Backend.Elements.Widgets;
 using Telerik.Sitefinity.Web.UI.ContentUI.Config;
 using Telerik.Sitefinity.Web.UI.ContentUI.Views.Backend.Master.Config;
 using timw255.Sitefinity.ImageOptimization.Configuration;
@@ -84,6 +91,19 @@ namespace timw255.Sitefinity.ImageOptimization
                 routeTemplate: "ImageOptimization/{controller}/{id}",
                 defaults: new { id = RouteParameter.Optional }
             );
+
+            this.RegisterLifecycleDecorators();
+        }
+
+        private void RegisterLifecycleDecorators()
+        {
+            ObjectFactory.Container.RegisterType<ILifecycleDecorator, OptimizationDecorator>(typeof(LibrariesManager).FullName,
+                new InjectionConstructor(
+                   new InjectionParameter<ILifecycleManager>(null),
+                   new InjectionParameter<Action<Content, Content>>(null),
+                   new InjectionParameter<Type[]>(null)
+                )
+            );
         }
 
         /// <summary>
@@ -93,12 +113,10 @@ namespace timw255.Sitefinity.ImageOptimization
         public override void Install(SiteInitializer initializer)
         {
             this.InstallVirtualPaths(initializer);
-            //this.InstallBackendPages(initializer);
             //this.InstallPageWidgets(initializer);
             this.InstallCustomFields(initializer);
             this.InstallBackendScripts(initializer);
             this.InstallActionMenuItems(initializer);
-            this.InstallLifecycleDecorators(initializer);
         }
 
         /// <summary>
@@ -144,6 +162,18 @@ namespace timw255.Sitefinity.ImageOptimization
 
                 manager.SaveSection(librariesConfig);
             }
+
+            var imagesBackendList = (MasterGridViewElement)librariesConfig.ContentViewControls["ImagesBackend"].ViewsConfig.Values.Where(v => v.ViewName == "ImagesBackendList").First();
+            var imagesGridMode = (GridViewModeElement)imagesBackendList.ViewModesConfig.ToList<ViewModeElement>().Where(m => m.Name == "Grid").First();
+            var imagesActionColumn = (ActionMenuColumnElement)imagesGridMode.ColumnsConfig.Values.Where(c => c.Name == "Actions").First();
+            var imagesActionMenuItems = imagesActionColumn.MenuItems;
+
+            if (imagesActionMenuItems.Contains("Optimize"))
+            {
+                var item = imagesActionMenuItems.AsEnumerable().Where(i => i.Name == "Optimize").FirstOrDefault();
+
+                imagesActionMenuItems.Remove(item);
+            }
         }
 
         private void UninstallBackendScripts(SiteInitializer initializer)
@@ -155,12 +185,26 @@ namespace timw255.Sitefinity.ImageOptimization
 
             var albumsBackendList = librariesConfig.ContentViewControls["AlbumsBackend"].ViewsConfig.Values.Where(v => v.ViewName == "AlbumsBackendList").First();
 
-            var scripts = albumsBackendList.Scripts;
+            var albumsScripts = albumsBackendList.Scripts;
 
-            ClientScriptElement scriptElement;
-            if (scripts.TryGetValue(scriptLocation, out scriptElement))
+            ClientScriptElement albumScriptElement;
+            if (albumsScripts.TryGetValue(scriptLocation, out albumScriptElement))
             {
-                scripts.Remove(scriptElement);
+                albumsScripts.Remove(albumScriptElement);
+
+                manager.SaveSection(librariesConfig);
+            }
+
+            string imageScriptLocation = "timw255.Sitefinity.ImageOptimization.Resources.ImageExtensions.js, timw255.Sitefinity.ImageOptimization";
+
+            var imagesBackendList = librariesConfig.ContentViewControls["ImagesBackend"].ViewsConfig.Values.Where(v => v.ViewName == "ImagesBackendList").First();
+
+            var imagesScripts = imagesBackendList.Scripts;
+
+            ClientScriptElement imageScriptElement;
+            if (imagesScripts.TryGetValue(imageScriptLocation, out imageScriptElement))
+            {
+                imagesScripts.Remove(imageScriptElement);
 
                 manager.SaveSection(librariesConfig);
             }
@@ -198,134 +242,13 @@ namespace timw255.Sitefinity.ImageOptimization
         }
         #endregion
 
-        #region Install backend pages
-        /// <summary>
-        /// Installs the backend pages.
-        /// </summary>
-        /// <param name="initializer">The initializer.</param>
-        private void InstallBackendPages(SiteInitializer initializer)
-        {
-            // Using our Fluent Api you can add your module backend pages hierarchy in no time
-            // Here is an example using resources to localize the title of the page and adding a dummy control
-            // to the module page. 
-
-            //Guid groupPageId = new Guid("cbc96e16-a576-4237-a39d-b0e213810bb2");
-            //Guid pageId = new Guid("8dfe187b-f8ad-4ae4-a3a3-5d0eddc40203");
-
-            //initializer.Installer
-            //    .CreateModuleGroupPage(groupPageId, "ImageOptimization group page")
-            //        .PlaceUnder(SiteInitializer.SitefinityNodeId)
-            //        .SetOrdinal(100)
-            //        .LocalizeUsing<ImageOptimizationResources>()
-            //        .SetTitleLocalized("ImageOptimizationGroupPageTitle")
-            //        .SetUrlNameLocalized("ImageOptimizationGroupPageUrlName")
-            //        .SetDescriptionLocalized("ImageOptimizationGroupPageDescription")
-            //        .ShowInNavigation()
-            //        .AddChildPage(pageId, "ImageOptimization page")
-            //            .SetOrdinal(1)
-            //            .LocalizeUsing<ImageOptimizationResources>()
-            //            .SetTitleLocalized("ImageOptimizationPageTitle")
-            //            .SetHtmlTitleLocalized("ImageOptimizationPageTitle")
-            //            .SetUrlNameLocalized("ImageOptimizationPageUrlName")
-            //            .SetDescriptionLocalized("ImageOptimizationPageDescription")
-            //            .AddControl(new System.Web.UI.WebControls.Literal()
-            //            {
-            //                Text = "<h1 class=\"sfBreadCrumb\">ImageOptimization module Installed</h1>",
-            //                Mode = LiteralMode.PassThrough
-            //            })
-            //            .ShowInNavigation()
-            //        .Done()
-            //    .Done();
-        }
-        #endregion
-
         #region Widgets
-        /// <summary>
-        /// Installs the form widgets.
-        /// </summary>
-        /// <param name="initializer">The initializer.</param>
-        private void InstallFormWidgets(SiteInitializer initializer)
-        {
-            // Here you can register your custom form widgets in the toolbox.
-            // See the example below.
-
-            //string moduleFormWidgetSectionName = "ImageOptimization";
-            //string moduleFormWidgetSectionTitle = "ImageOptimization";
-            //string moduleFormWidgetSectionDescription = "ImageOptimization";
-
-            //initializer.Installer
-            //    .Toolbox(CommonToolbox.FormWidgets)
-            //        .LoadOrAddSection(moduleFormWidgetSectionName)
-            //            .SetTitle(moduleFormWidgetSectionTitle)
-            //            .SetDescription(moduleFormWidgetSectionDescription)
-            //            .LoadOrAddWidget<WidgetType>(WidgetNameForDevelopers)
-            //                .SetTitle(WidgetTitle)
-            //                .SetDescription(WidgetDescription)
-            //                .LocalizeUsing<ImageOptimizationResources>()
-            //                .SetCssClass(WidgetCssClass) // You can use a css class to add an icon (this is optional)
-            //            .Done()
-            //        .Done()
-            //    .Done();
-        }
-
-        /// <summary>
-        /// Installs the layout widgets.
-        /// </summary>
-        /// <param name="initializer">The initializer.</param>
-        private void InstallLayoutWidgets(SiteInitializer initializer)
-        {
-            // Here you can register your custom layout widgets in the toolbox.
-            // See the example below.
-
-            //string moduleLayoutWidgetSectionName = "ImageOptimization";
-            //string moduleLayoutWidgetSectionTitle = "ImageOptimization";
-            //string moduleLayoutWidgetSectionDescription = "ImageOptimization";
-
-            //initializer.Installer
-            //    .Toolbox(CommonToolbox.Layouts)
-            //        .LoadOrAddSection(moduleLayoutWidgetSectionName)
-            //            .SetTitle(moduleLayoutWidgetSectionTitle)
-            //            .SetDescription(moduleLayoutWidgetSectionDescription)
-            //            .LoadOrAddWidget<LayoutControl>(WidgetNameForDevelopers)
-            //                .SetTitle(WidgetTitle)
-            //                .SetDescription(WidgetDescription)
-            //                .LocalizeUsing<ImageOptimizationResources>()
-            //                .SetCssClass(WidgetCssClass) // You can use a css class to add an icon (Optional)
-            //                .SetParameters(new NameValueCollection() 
-            //                { 
-            //                    { "layoutTemplate", FullPathToTheLayoutWidget },
-            //                })
-            //            .Done()
-            //        .Done()
-            //    .Done();
-        }
-
         /// <summary>
         /// Installs the page widgets.
         /// </summary>
         /// <param name="initializer">The initializer.</param>
         private void InstallPageWidgets(SiteInitializer initializer)
         {
-            // Here you can register your custom page widgets in the toolbox.
-            // See the example below.
-
-            //string modulePageWidgetSectionName = "ImageOptimization";
-            //string modulePageWidgetSectionTitle = "ImageOptimization";
-            //string modulePageWidgetSectionDescription = "ImageOptimization";
-
-            //initializer.Installer
-            //    .Toolbox(CommonToolbox.PageWidgets)
-            //        .LoadOrAddSection(modulePageWidgetSectionName)
-            //            .SetTitle(modulePageWidgetSectionTitle)
-            //            .SetDescription(modulePageWidgetSectionDescription)
-            //            .LoadOrAddWidget<WidgetType>(WidgetNameForDevelopers)
-            //                .SetTitle(WidgetTitle)
-            //                .SetDescription(WidgetDescription)
-            //                .LocalizeUsing<ImageOptimizationResources>()
-            //                .SetCssClass(WidgetCssClass) // You can use a css class to add an icon (Optional)
-            //            .Done()
-            //        .Done()
-            //    .Done();
         }
 
         private void InstallCustomFields(SiteInitializer initializer)
@@ -348,25 +271,45 @@ namespace timw255.Sitefinity.ImageOptimization
 
         private void InstallBackendScripts(SiteInitializer initializer)
         {
-            string loadMethodName = "albumsListLoaded";
-            string scriptLocation = "timw255.Sitefinity.ImageOptimization.Resources.AlbumExtensions.js, timw255.Sitefinity.ImageOptimization";
+            string albumLoadMethodName = "albumsListLoaded";
+            string albumScriptLocation = "timw255.Sitefinity.ImageOptimization.Resources.AlbumExtensions.js, timw255.Sitefinity.ImageOptimization";
 
             var manager = ConfigManager.GetManager();
             var librariesConfig = manager.GetSection<LibrariesConfig>();
 
             var albumsBackendList = librariesConfig.ContentViewControls["AlbumsBackend"].ViewsConfig.Values.Where(v => v.ViewName == "AlbumsBackendList").First();
 
-            var scripts = albumsBackendList.Scripts;
+            var albumsScripts = albumsBackendList.Scripts;
 
-            ClientScriptElement scriptElement;
-            if (!scripts.TryGetValue(scriptLocation, out scriptElement))
+            ClientScriptElement albumScriptElement;
+            if (!albumsScripts.TryGetValue(albumScriptLocation, out albumScriptElement))
             {
-                var newClientScript = new ClientScriptElement(scripts);
+                var newClientScript = new ClientScriptElement(albumsScripts);
 
-                newClientScript.ScriptLocation = scriptLocation;
-                newClientScript.LoadMethodName = loadMethodName;
+                newClientScript.ScriptLocation = albumScriptLocation;
+                newClientScript.LoadMethodName = albumLoadMethodName;
 
-                scripts.Add(scriptLocation, newClientScript);
+                albumsScripts.Add(albumScriptLocation, newClientScript);
+
+                manager.SaveSection(librariesConfig);
+            }
+
+            string imageLoadMethodName = "imagesListLoaded";
+            string imageScriptLocation = "timw255.Sitefinity.ImageOptimization.Resources.ImageExtensions.js, timw255.Sitefinity.ImageOptimization";
+
+            var imagesBackendList = librariesConfig.ContentViewControls["ImagesBackend"].ViewsConfig.Values.Where(v => v.ViewName == "ImagesBackendList").First();
+
+            var imagesScripts = imagesBackendList.Scripts;
+
+            ClientScriptElement imageScriptElement;
+            if (!imagesScripts.TryGetValue(imageScriptLocation, out imageScriptElement))
+            {
+                var newClientScript = new ClientScriptElement(imagesScripts);
+
+                newClientScript.ScriptLocation = imageScriptLocation;
+                newClientScript.LoadMethodName = imageLoadMethodName;
+
+                imagesScripts.Add(imageScriptLocation, newClientScript);
 
                 manager.SaveSection(librariesConfig);
             }
@@ -396,17 +339,35 @@ namespace timw255.Sitefinity.ImageOptimization
 
                 manager.SaveSection(librariesConfig);
             }
-        }
 
-        private void InstallLifecycleDecorators(SiteInitializer initializer)
-        {
-            ObjectFactory.Container.RegisterType<ILifecycleDecorator, OptimizationDecorator>(typeof(LibrariesManager).FullName,
-                new InjectionConstructor(
-                   new InjectionParameter<ILifecycleManager>(null),
-                   new InjectionParameter<Action<Content, Content>>(null),
-                   new InjectionParameter<Type[]>(null)
-                )
-            );
+            var imagesBackendList = (MasterGridViewElement)librariesConfig.ContentViewControls["ImagesBackend"].ViewsConfig.Values.Where(v => v.ViewName == "ImagesBackendList").First();
+            var imagesGridMode = (GridViewModeElement)imagesBackendList.ViewModesConfig.ToList<ViewModeElement>().Where(m => m.Name == "Grid").First();
+            var imagesActionColumn = (ActionMenuColumnElement)imagesGridMode.ColumnsConfig.Values.Where(c => c.Name == "Actions").First();
+            var imagesActionMenuItems = imagesActionColumn.MenuItems;
+
+            //var literalWidgetElement = new LiteralWidgetElement(imagesActionMenuItems);
+
+            //literalWidgetElement.Name = "OptimizeSep";
+            //literalWidgetElement.CssClass = "sfSeparator";
+            //literalWidgetElement.Text = "More...";
+            //literalWidgetElement.WrapperTagKey = HtmlTextWriterTag.Li;
+            //literalWidgetElement.WidgetType = typeof(LiteralWidget);
+            //literalWidgetElement.IsSeparator = true;
+
+            //imagesActionColumn.MenuItems.Add(literalWidgetElement);
+
+            var commandWidget = new CommandWidgetElement(imagesActionMenuItems);
+
+            commandWidget.ButtonType = CommandButtonType.Standard;
+            commandWidget.Name = "Optimize";
+            commandWidget.Text = "Optimize";
+            commandWidget.CommandName = "optimize";
+            commandWidget.WrapperTagKey = HtmlTextWriterTag.Li;
+            commandWidget.WidgetType = typeof(CommandWidgetElement);
+
+            imagesActionColumn.MenuItems.Add(commandWidget);
+
+            manager.SaveSection(librariesConfig);
         }
 
         #endregion

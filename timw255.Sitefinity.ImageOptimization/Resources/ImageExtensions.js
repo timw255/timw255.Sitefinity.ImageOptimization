@@ -5,13 +5,12 @@
 
         jQuery.ajax({
             type: "POST",
-            url: sender._baseUrl + "ImageOptimization/Optimization/?albumId=" + args._dataItem.Id,
+            url: sender._baseUrl + "ImageOptimization/Optimization/?parentId=" + args._dataItem.ParentId + "&imageId=" + args._dataItem.Id,
             contentType: "application/json; charset=utf-8",
             dataType: "json",
             processdata: false,
             success: function (taskId) {
-                clickedDataArgs.get_dataItem().ScheduledTaskInfo = { Id: taskId };
-                addScheduledTaskToPolledList(clickedDataArgs, dataItem.Id);
+                sender.get_itemsGrid().dataBind();
             },
             error: function (jqXHR) {
                 alert(Telerik.Sitefinity.JSON.parse(jqXHR.responseText).Detail);
@@ -20,6 +19,6 @@
     }
 }
 
-function albumsListLoaded(sender, args) {
+function imagesListLoaded(sender, args) {
     sender.add_itemCommand(optimizeCommandHandler);
 }

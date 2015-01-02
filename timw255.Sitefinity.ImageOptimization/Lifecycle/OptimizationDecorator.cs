@@ -25,17 +25,23 @@ namespace timw255.Sitefinity.ImageOptimization.Lifecycle
 
         protected override ILifecycleDataItemGeneric ExecuteOnPublish(ILifecycleDataItemGeneric masterItem, ILifecycleDataItemGeneric liveItem, System.Globalization.CultureInfo culture = null, DateTime? publicationDate = null)
         {
-            var identity = ClaimsManager.GetCurrentIdentity();
-            var userName = identity.Name;
-
             if (masterItem is Image)
             {
-                var imageItem = masterItem as Image;
-                if (liveItem != null && userName != "system")
+                var masterImage = masterItem as Image;
+                var liveImage = liveItem as Image;
+
+                if (masterImage.TotalSize != liveImage.TotalSize)
                 {
-                    imageItem.SetValue("Optimized", false);
+                    var identity = ClaimsManager.GetCurrentIdentity();
+                    var userName = identity.Name;
+
+                    if (liveItem != null && userName != "system")
+                    {
+                        masterImage.SetValue("Optimized", false);
+                    }
                 }
-                return base.ExecuteOnPublish(imageItem as ILifecycleDataItemGeneric, liveItem, culture, publicationDate);
+
+                return base.ExecuteOnPublish(masterItem as ILifecycleDataItemGeneric, liveItem, culture, publicationDate);
             }
             else
             {

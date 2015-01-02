@@ -53,20 +53,20 @@ namespace timw255.Sitefinity.ImageOptimization.Configuration
             
             imageOptimizerElement = new ImageOptimizerSettings(this.Optimizers)
             {
-                Name = "KrakenIOImageOptimizer",
-                Title = "KrakenIO Image Optimizer",
+                Name = "KrakenImageOptimizer",
+                Title = "Kraken Image Optimizer",
                 Description = "Image optimizer that uses the Kraken.io image service",
-                OptimizerType = typeof(KrakenIOImageOptimizer),
+                OptimizerType = typeof(KrakenImageOptimizer),
                 Enabled = true
             };
 
             imageOptimizerElement.Parameters.Add("apiKey", "");
             imageOptimizerElement.Parameters.Add("apiSecret", "");
             imageOptimizerElement.Parameters.Add("useCallbacks", "False");
-            imageOptimizerElement.Parameters.Add("callbackURL", "http://www.yoursite.com/api/Optimization");
+            imageOptimizerElement.Parameters.Add("callbackURL", "http://www.yoursite.com/ImageOptimization/KrakenCallback");
             imageOptimizerElement.Parameters.Add("useLossyOptimization", "False");
 
-            this.Optimizers.Add("KrakenIOImageOptimizer", imageOptimizerElement);
+            this.Optimizers.Add("KrakenImageOptimizer", imageOptimizerElement);
 
             imageOptimizerElement = new ImageOptimizerSettings(this.Optimizers)
             {

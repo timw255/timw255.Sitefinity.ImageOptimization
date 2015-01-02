@@ -451,12 +451,13 @@
     <Compile Include="ImageOptimizationModule.cs" />
     <Compile Include="ImageOptimizationInstaller.cs" />
     <Compile Include="KrakenClient.cs" />
+    <Compile Include="MVC\Controllers\KrakenCallbackController.cs" />
     <Compile Include="Optimizer\IImageOptimizer.cs" />
     <Compile Include="ImageOptimizationResources.cs" />
     <Compile Include="Lifecycle\OptimizationDecorator.cs" />
     <Compile Include="MVC\Controllers\OptimizationController.cs" />
     <Compile Include="Optimizer\ImageMagickImageOptimizer.cs" />
-    <Compile Include="Optimizer\KrakenIOImageOptimizer.cs" />
+    <Compile Include="Optimizer\KrakenImageOptimizer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tasks\AlbumOptimizationTask.cs" />
   </ItemGroup>
@@ -470,6 +471,7 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\AlbumExtensions.js" />
+    <EmbeddedResource Include="Resources\ImageExtensions.js" />
     <Content Include="Web\Scripts\readme.txt" />
     <Content Include="Web\Services\readme.txt" />
     <Content Include="Web\UI\readme.txt" />
