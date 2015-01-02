@@ -16,14 +16,14 @@ using Telerik.Sitefinity.Data;
 using Telerik.Sitefinity.Data.Metadata;
 using Telerik.Sitefinity.Fluent.Modules;
 using Telerik.Sitefinity.Fluent.Modules.Toolboxes;
-using Telerik.Sitefinity.Modules.Pages.Configuration;
-using Telerik.Sitefinity.Services;
-using Telerik.Sitefinity.Web.UI;
 using Telerik.Sitefinity.GenericContent.Model;
 using Telerik.Sitefinity.Libraries.Model;
 using Telerik.Sitefinity.Lifecycle;
 using Telerik.Sitefinity.Modules.Libraries;
 using Telerik.Sitefinity.Modules.Libraries.Configuration;
+using Telerik.Sitefinity.Modules.Pages.Configuration;
+using Telerik.Sitefinity.Services;
+using Telerik.Sitefinity.Web.UI;
 using Telerik.Sitefinity.Web.UI.ContentUI.Config;
 using Telerik.Sitefinity.Web.UI.ContentUI.Views.Backend.Master.Config;
 using timw255.Sitefinity.ImageOptimization.Configuration;
@@ -72,10 +72,6 @@ namespace timw255.Sitefinity.ImageOptimization
         {
             base.Initialize(settings);
 
-            // Add your initialization logic here
-            // here we register the module resources
-            // but if you have you should register your module configuration or web service here
-
             App.WorkWith()
                 .Module(settings.Name)
                     .Initialize()
@@ -84,13 +80,10 @@ namespace timw255.Sitefinity.ImageOptimization
             Config.RegisterSection<ImageOptimizationConfig>();
 
             GlobalConfiguration.Configuration.Routes.MapHttpRoute(
-                name: "timw255ImageOptimization",
-                routeTemplate: "api/{controller}/{id}",
+                name: "ImageOptimization",
+                routeTemplate: "ImageOptimization/{controller}/{id}",
                 defaults: new { id = RouteParameter.Optional }
             );
-
-            // Here is also the place to register to some Sitefinity specific events like Bootstrapper.Initialized or subscribe for an event in with the EventHub class            
-            // Please refer to the documentation for additional information http://www.sitefinity.com/documentation/documentationarticles/developers-guide/deep-dive/sitefinity-event-system/ieventservice-and-eventhub
         }
 
         /// <summary>
@@ -99,16 +92,9 @@ namespace timw255.Sitefinity.ImageOptimization
         /// <param name="initializer">The Site Initializer. A helper class for installing Sitefinity modules.</param>
         public override void Install(SiteInitializer initializer)
         {
-            // Here you can install a virtual path to be used for this assembly
-            // A virtual path is required to access the embedded resources
-            //this.InstallVirtualPaths(initializer);
-
-            // Here you can install you backend pages
+            this.InstallVirtualPaths(initializer);
             //this.InstallBackendPages(initializer);
-
-            // Here you can also install your page/form/layout widgets
             //this.InstallPageWidgets(initializer);
-
             this.InstallCustomFields(initializer);
             this.InstallBackendScripts(initializer);
             this.InstallActionMenuItems(initializer);
@@ -123,13 +109,6 @@ namespace timw255.Sitefinity.ImageOptimization
         /// <param name="upgradeFrom">The version this module us upgrading from.</param>
         public override void Upgrade(SiteInitializer initializer, Version upgradeFrom)
         {
-            // Here you can check which one is your prevous module version and execute some code if you need to
-            // See the example bolow
-            //
-            //if (upgradeFrom < new Version("1.0.1.0"))
-            //{
-            //    some upgrade code that your new version requires
-            //}
         }
 
         /// <summary>
@@ -139,7 +118,6 @@ namespace timw255.Sitefinity.ImageOptimization
         public override void Uninstall(SiteInitializer initializer)
         {
             base.Uninstall(initializer);
-            // Add your uninstall logic here
 
             this.UninstallActionMenuItems(initializer);
             this.UninstallBackendScripts(initializer);
@@ -195,7 +173,6 @@ namespace timw255.Sitefinity.ImageOptimization
         /// </summary>
         protected override ConfigSection GetModuleConfig()
         {
-            // If you have a module configuration, you should return it here
             return Config.Get<ImageOptimizationConfig>();
         }
         #endregion
@@ -207,19 +184,17 @@ namespace timw255.Sitefinity.ImageOptimization
         /// <param name="initializer">The initializer.</param>
         private void InstallVirtualPaths(SiteInitializer initializer)
         {
-            // Here you can register your module virtual paths
-
-            //var virtualPaths = initializer.Context.GetConfig<VirtualPathSettingsConfig>().VirtualPaths;
-            //var moduleVirtualPath = ImageOptimizationModule.ModuleVirtualPath + "*";
-            //if (!virtualPaths.ContainsKey(moduleVirtualPath))
-            //{
-            //    virtualPaths.Add(new VirtualPathElement(virtualPaths)
-            //    {
-            //        VirtualPath = moduleVirtualPath,
-            //        ResolverName = "EmbeddedResourceResolver",
-            //        ResourceLocation = typeof(ImageOptimizationModule).Assembly.GetName().Name
-            //    });
-            //}
+            var virtualPaths = initializer.Context.GetConfig<VirtualPathSettingsConfig>().VirtualPaths;
+            var moduleVirtualPath = ImageOptimizationModule.ModuleVirtualPath + "*";
+            if (!virtualPaths.ContainsKey(moduleVirtualPath))
+            {
+                virtualPaths.Add(new VirtualPathElement(virtualPaths)
+                {
+                    VirtualPath = moduleVirtualPath,
+                    ResolverName = "EmbeddedResourceResolver",
+                    ResourceLocation = typeof(ImageOptimizationModule).Assembly.GetName().Name
+                });
+            }
         }
         #endregion
 
@@ -429,7 +404,9 @@ namespace timw255.Sitefinity.ImageOptimization
                 new InjectionConstructor(
                    new InjectionParameter<ILifecycleManager>(null),
                    new InjectionParameter<Action<Content, Content>>(null),
-                   new InjectionParameter<Type[]>(null)));
+                   new InjectionParameter<Type[]>(null)
+                )
+            );
         }
 
         #endregion

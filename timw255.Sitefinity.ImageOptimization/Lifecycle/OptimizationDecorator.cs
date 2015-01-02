@@ -19,9 +19,9 @@ namespace timw255.Sitefinity.ImageOptimization.Lifecycle
         }
 
         public OptimizationDecorator(ILifecycleManager manager, Action<Content, Content> copyDelegate, params Type[] itemTypes)
-			: base(manager, copyDelegate, itemTypes)
-		{
-		}
+            : base(manager, copyDelegate, itemTypes)
+        {
+        }
 
         protected override ILifecycleDataItemGeneric ExecuteOnPublish(ILifecycleDataItemGeneric masterItem, ILifecycleDataItemGeneric liveItem, System.Globalization.CultureInfo culture = null, DateTime? publicationDate = null)
         {

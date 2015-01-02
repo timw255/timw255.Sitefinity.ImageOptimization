@@ -54,6 +54,11 @@ namespace timw255.Sitefinity.ImageOptimization.Tasks
         {
             ImageOptimizationConfig imageOptimizationConfig = Config.Get<ImageOptimizationConfig>();
 
+            var optimizerSettings = imageOptimizationConfig.Optimizers[imageOptimizationConfig.DefaultOptimizer];
+
+            IImageOptimizer imageOptimizer = (IImageOptimizer)Activator.CreateInstance(optimizerSettings.OptimizerType.Assembly.FullName, optimizerSettings.OptimizerType.FullName).Unwrap();
+            imageOptimizer.AlbumId = this.AlbumId;
+
             LibrariesManager _librariesManager = LibrariesManager.GetManager();
             Album album = _librariesManager.GetAlbum(this.AlbumId);
 
@@ -62,10 +67,6 @@ namespace timw255.Sitefinity.ImageOptimization.Tasks
             var images = album.Images().Where(i => i.Status == ContentLifecycleStatus.Master && !i.GetValue<bool>("Optimized"));
 
             _itemsCount = images.Count();
-
-            Type optimizerType = Type.GetType(imageOptimizationConfig.DefaultOptimizer);
-            IImageOptimizer imageOptimizer = Activator.CreateInstance(null, imageOptimizationConfig.DefaultOptimizer) as IImageOptimizer;
-            imageOptimizer.AlbumId = this.AlbumId;
 
             foreach (Image image in images)
             {
@@ -77,9 +78,10 @@ namespace timw255.Sitefinity.ImageOptimization.Tasks
                 using (MemoryStream ms = new MemoryStream())
                 {
                     imageData.CopyTo(ms);
+                    ms.Seek(0, SeekOrigin.Begin);
 
                     string optimizedFileName;
-                    Stream optimizedImage = imageOptimizer.OptimizeImage(image, imageData, out optimizedFileName);
+                    Stream optimizedImage = imageOptimizer.OptimizeImage(image, ms, out optimizedFileName);
 
                     // There are different reasons why the optimizer would return null.
                     // 1. An error occured (in which case the optimizer should throw or handle the exception)

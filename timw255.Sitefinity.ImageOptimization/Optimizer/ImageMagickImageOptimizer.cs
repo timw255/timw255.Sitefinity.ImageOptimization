@@ -28,43 +28,42 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
 
             int _imageQuality = Int32.Parse(settings["imageQuality"]);
 
-            using (MemoryStream compressed = new MemoryStream())
+            MagickReadSettings magickSettings = new MagickReadSettings();
+
+            switch (image.Extension.ToLower())
             {
-                MagickReadSettings magickSettings = new MagickReadSettings();
+                case ".png":
+                    magickSettings.Format = MagickFormat.Png;
+                    break;
+                case ".jpg":
+                    magickSettings.Format = MagickFormat.Jpg;
+                    break;
+                case ".jpeg":
+                    magickSettings.Format = MagickFormat.Jpeg;
+                    break;
+                case ".bmp":
+                    magickSettings.Format = MagickFormat.Bmp;
+                    break;
+                default:
+                    magickSettings.Format = MagickFormat.Jpg;
+                    break;
+            }
 
-                switch (image.Extension)
+            using (MagickImage img = new MagickImage(imageData, magickSettings))
+            {
+                MemoryStream compressed = new MemoryStream();
+
+                img.Quality = _imageQuality;
+                img.Write(compressed);
+
+                if (compressed == null)
                 {
-                    case ".png":
-                        magickSettings.Format = MagickFormat.Png;
-                        break;
-                    case ".jpg":
-                        magickSettings.Format = MagickFormat.Jpg;
-                        break;
-                    case ".jpeg":
-                        magickSettings.Format = MagickFormat.Jpeg;
-                        break;
-                    case ".bmp":
-                        magickSettings.Format = MagickFormat.Bmp;
-                        break;
-                    default:
-                        magickSettings.Format = MagickFormat.Jpg;
-                        break;
+                    optimizedFilename = "";
+                    return null;
                 }
 
-                using (MagickImage img = new MagickImage(imageData, magickSettings))
-                {
-                    img.Quality = _imageQuality;
-                    img.Write(compressed);
-
-                    if (compressed == null)
-                    {
-                        optimizedFilename = "";
-                        return null;
-                    }
-
-                    optimizedFilename = image.FilePath;
-                    return compressed;
-                }
+                optimizedFilename = image.FilePath;
+                return compressed;
             }
         }
     }
