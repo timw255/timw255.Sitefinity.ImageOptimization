@@ -75,8 +75,9 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
                 }
 
                 using (var webClient = new WebClient())
-                using (var stream = webClient.OpenRead(response.KrakedUrl))
                 {
+                    var stream = webClient.OpenRead(response.KrakedUrl);
+
                     optimizedExtension = Path.GetExtension(response.KrakedUrl);
                     return stream;
                 }
