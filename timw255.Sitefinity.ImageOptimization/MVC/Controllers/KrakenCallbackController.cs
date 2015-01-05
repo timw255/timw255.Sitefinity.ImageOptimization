@@ -17,6 +17,7 @@ using Telerik.Sitefinity.Model;
 using timw255.Sitefinity.ImageOptimization.Tasks;
 using timw255.Sitefinity.ImageOptimization.Configuration;
 using Telerik.Sitefinity.Configuration;
+using Telerik.Sitefinity.Versioning;
 
 namespace timw255.Sitefinity.ImageOptimization.MVC.Controllers
 {
@@ -73,7 +74,7 @@ namespace timw255.Sitefinity.ImageOptimization.MVC.Controllers
 
             using (var webClient = new WebClient())
             using (var stream = webClient.OpenRead(krakedUrl))
-            {
+            {   
                 // Check out the master to get a temp version.
                 Image temp = _librariesManager.Lifecycle.CheckOut(image) as Image;
 

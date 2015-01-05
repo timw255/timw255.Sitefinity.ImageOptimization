@@ -12,7 +12,7 @@ using timw255.Sitefinity.ImageOptimization.Configuration;
 
 namespace timw255.Sitefinity.ImageOptimization.Optimizer
 {
-    public class ImageMagickImageOptimizer : IImageOptimizer
+    public class ImageMagickImageOptimizer : ImageOptimizerBase
     {
         private ImageOptimizationConfig _config;
 
@@ -21,7 +21,7 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
             _config = Config.Get<ImageOptimizationConfig>();
         }
 
-        public Stream OptimizeImage(Image image, Stream imageData, out string optimizedFilename)
+        public override Stream OptimizeImageData(Image image, Stream imageData, out string optimizedExtension)
         {
             var settings = _config.Optimizers["ImageMagickImageOptimizer"].Parameters;
 
@@ -57,18 +57,13 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
 
                 if (compressed == null)
                 {
-                    optimizedFilename = "";
+                    optimizedExtension = "";
                     return null;
                 }
 
-                optimizedFilename = image.FilePath;
+                optimizedExtension = Path.GetExtension(image.FilePath);
                 return compressed;
             }
-        }
-
-        public Stream ProcessCallback(object data, out Guid albumId, out Guid imageId, out string optimizedExtension)
-        {
-            throw new NotImplementedException();
         }
     }
 }

@@ -13,7 +13,7 @@ using timw255.Sitefinity.ImageOptimization.Configuration;
 
 namespace timw255.Sitefinity.ImageOptimization.Optimizer
 {
-    public class KrakenImageOptimizer : IImageOptimizer
+    public class KrakenImageOptimizer : ImageOptimizerBase
     {
         private ImageOptimizationConfig _config;
 
@@ -40,7 +40,7 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
             _krakenClient = new Kraken(_key, _secret);
         }
 
-        public Stream OptimizeImage(Image image, Stream imageData, out string optimizedExtension)
+        public override Stream OptimizeImageData(Image image, Stream imageData, out string optimizedExtension)
         {
             KrakenRequest krakenRequest = new KrakenRequest();
 
