@@ -74,14 +74,16 @@ namespace timw255.Sitefinity.ImageOptimization.MVC.Controllers
             using (var webClient = new WebClient())
             using (var stream = webClient.OpenRead(krakedUrl))
             {
-                //Check out the master to get a temp version.
+                // Check out the master to get a temp version.
                 Image temp = _librariesManager.Lifecycle.CheckOut(image) as Image;
 
-                //Make the modifications to the temp version.
+                // Make the modifications to the temp version.
                 _librariesManager.Upload(temp, stream, Path.GetExtension(fileName));
 
-                //Checkin the temp and get the updated master version.
-                //After the check in the temp version is deleted.
+                temp.SetValue("Optimized", true);
+
+                // Check in the temp version.
+                // After the check in the temp version is deleted.
                 _librariesManager.Lifecycle.CheckIn(temp);
 
                 _librariesManager.SaveChanges();

@@ -84,7 +84,7 @@ namespace timw255.Sitefinity.ImageOptimization.Tasks
 
                     // There are different reasons why the optimizer would return null.
                     // 1. An error occured (in which case the optimizer should throw or handle the exception)
-                    // 2. Some other mechanism is being used to handle the item updates (callbacks)
+                    // 2. Some other mechanism is being used to handle the item updates (callbacks, etc.)
                     if (optimizedImage != null)
                     {
                         // Check out the master to get a temp version.
@@ -94,7 +94,7 @@ namespace timw255.Sitefinity.ImageOptimization.Tasks
                         _librariesManager.Upload(temp, optimizedImage, Path.GetExtension(optimizedExtension));
                         temp.SetValue("Optimized", true);
 
-                        // Checkin the temp and get the updated master version.
+                        // Check in the temp version.
                         // After the check in the temp version is deleted.
                         _librariesManager.Lifecycle.CheckIn(temp);
 

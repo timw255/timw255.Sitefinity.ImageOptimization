@@ -30,15 +30,9 @@ namespace timw255.Sitefinity.ImageOptimization.Lifecycle
                 var masterImage = masterItem as Image;
                 var liveImage = liveItem as Image;
 
-                if (masterImage.TotalSize != liveImage.TotalSize)
+                if (liveImage != null && masterImage.FileId != liveImage.FileId)
                 {
-                    var identity = ClaimsManager.GetCurrentIdentity();
-                    var userName = identity.Name;
-
-                    if (liveItem != null && userName != "system")
-                    {
-                        masterImage.SetValue("Optimized", false);
-                    }
+                    masterImage.SetValue("Optimized", false);
                 }
 
                 return base.ExecuteOnPublish(masterItem as ILifecycleDataItemGeneric, liveItem, culture, publicationDate);

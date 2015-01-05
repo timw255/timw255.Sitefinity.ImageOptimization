@@ -18,6 +18,7 @@ using timw255.Sitefinity.ImageOptimization.Tasks;
 using timw255.Sitefinity.ImageOptimization.Configuration;
 using Telerik.Sitefinity.Configuration;
 using Telerik.Sitefinity.GenericContent.Model;
+using Telerik.Sitefinity;
 
 namespace timw255.Sitefinity.ImageOptimization.MVC.Controllers
 {
@@ -53,7 +54,7 @@ namespace timw255.Sitefinity.ImageOptimization.MVC.Controllers
                 // This saves us from having to care about BlobStorage
                 Stream imageData = albumProvider.Download(image);
 
-                // Can't trust the length of Stream. Converting to a MemoryStream
+                // Can't trust the length of Stream. Copying to a MemoryStream
                 using (MemoryStream ms = new MemoryStream())
                 {
                     imageData.CopyTo(ms);
@@ -71,10 +72,11 @@ namespace timw255.Sitefinity.ImageOptimization.MVC.Controllers
                         Image temp = _librariesManager.Lifecycle.CheckOut(image) as Image;
 
                         // Make the modifications to the temp version.
-                        _librariesManager.Upload(temp, optimizedImage, Path.GetExtension(optimizedExtension));
+                        _librariesManager.Upload(temp, optimizedImage, optimizedExtension);
+
                         temp.SetValue("Optimized", true);
 
-                        // Checkin the temp and get the updated master version.
+                        // Check in the temp version.
                         // After the check in the temp version is deleted.
                         _librariesManager.Lifecycle.CheckIn(temp);
 
