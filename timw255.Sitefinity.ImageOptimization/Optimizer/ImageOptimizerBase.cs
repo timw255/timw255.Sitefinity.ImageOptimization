@@ -109,16 +109,12 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
                     // After the check in the temp version is deleted.
                     Manager.Lifecycle.CheckIn(temp);
 
-                    Manager.SaveChanges();
+                    Image liveImage = (Image)Manager.Lifecycle.GetLive(image);
 
-                    // Check to see if this image is already published.
-                    // If it is, we need to publish the "Master" to update "Live"
-                    if (image.GetWorkflowState() == "Published")
-                    {
-                        var bag = new Dictionary<string, string>();
-                        bag.Add("ContentType", typeof(Image).FullName);
-                        WorkflowManager.MessageWorkflow(image.Id, typeof(Image), albumProvider.Name, "Publish", false, bag);
-                    }
+                    liveImage.FileId = image.FileId;
+                    liveImage.SetValue("Optimized", true);
+
+                    Manager.SaveChanges();
                 }
 
                 // Let concerned parties know that processing has completed for this item
