@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Telerik.Sitefinity.GenericContent.Model;
 using Telerik.Sitefinity.Libraries.Model;
 using Telerik.Sitefinity.Lifecycle;
 using Telerik.Sitefinity.Model;
-using Telerik.Sitefinity.GenericContent.Model;
 using Telerik.Sitefinity.Security.Claims;
 
 namespace timw255.Sitefinity.ImageOptimization.Lifecycle

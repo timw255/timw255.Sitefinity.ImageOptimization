@@ -9,27 +9,22 @@ using System.Threading.Tasks;
 using Telerik.Sitefinity.Configuration;
 using Telerik.Sitefinity.GenericContent.Model;
 using Telerik.Sitefinity.Libraries.Model;
+using Telerik.Sitefinity.Model;
 using Telerik.Sitefinity.Modules.Libraries;
 using Telerik.Sitefinity.Scheduling;
+using Telerik.Sitefinity.Versioning;
 using Telerik.Sitefinity.Workflow;
-using Telerik.Sitefinity.Model;
 using timw255.Sitefinity.ImageOptimization.Configuration;
 using timw255.Sitefinity.ImageOptimization.Optimizer;
-using Telerik.Sitefinity.Versioning;
 
 namespace timw255.Sitefinity.ImageOptimization.Tasks
 {
     public class AlbumOptimizationTask : ScheduledTask
     {
         private int _itemsCount;
-
         private int _currentIndex;
 
-        public Guid AlbumId
-        {
-            get;
-            set;
-        }
+        public Guid AlbumId { get; set; }
 
         public override string TaskName
         {
@@ -113,11 +108,7 @@ namespace timw255.Sitefinity.ImageOptimization.Tasks
 
     internal class AlbumOptimizationTaskState
     {
-        public Guid AlbumId
-        {
-            get;
-            set;
-        }
+        public Guid AlbumId { get; set; }
 
         public AlbumOptimizationTaskState()
         {

@@ -9,15 +9,15 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web.Http;
+using Telerik.Sitefinity.Configuration;
 using Telerik.Sitefinity.Libraries.Model;
+using Telerik.Sitefinity.Model;
 using Telerik.Sitefinity.Modules.Libraries;
 using Telerik.Sitefinity.Scheduling;
-using Telerik.Sitefinity.Workflow;
-using Telerik.Sitefinity.Model;
-using timw255.Sitefinity.ImageOptimization.Tasks;
-using timw255.Sitefinity.ImageOptimization.Configuration;
-using Telerik.Sitefinity.Configuration;
 using Telerik.Sitefinity.Versioning;
+using Telerik.Sitefinity.Workflow;
+using timw255.Sitefinity.ImageOptimization.Configuration;
+using timw255.Sitefinity.ImageOptimization.Tasks;
 
 namespace timw255.Sitefinity.ImageOptimization.MVC.Controllers
 {
