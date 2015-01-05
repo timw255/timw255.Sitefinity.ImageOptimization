@@ -15,8 +15,6 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
 {
     public class KrakenImageOptimizer : ImageOptimizerBase
     {
-        private ImageOptimizationConfig _config;
-
         private Kraken _krakenClient;
 
         private string _key;
@@ -27,8 +25,6 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
 
         public KrakenImageOptimizer()
         {
-            _config = Config.Get<ImageOptimizationConfig>();
-
             var settings = _config.Optimizers["KrakenImageOptimizer"].Parameters;
 
             _key = settings["apiKey"];
@@ -40,7 +36,7 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
             _krakenClient = new Kraken(_key, _secret);
         }
 
-        public override Stream OptimizeImageData(Image image, Stream imageData, out string optimizedExtension)
+        public override Stream CompressImageData(Image image, Stream imageData, out string optimizedExtension)
         {
             KrakenRequest krakenRequest = new KrakenRequest();
 

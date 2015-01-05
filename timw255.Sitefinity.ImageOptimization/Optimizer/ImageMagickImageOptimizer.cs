@@ -14,14 +14,11 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
 {
     public class ImageMagickImageOptimizer : ImageOptimizerBase
     {
-        private ImageOptimizationConfig _config;
-
         public ImageMagickImageOptimizer()
         {
-            _config = Config.Get<ImageOptimizationConfig>();
         }
 
-        public override Stream OptimizeImageData(Image image, Stream imageData, out string optimizedExtension)
+        public override Stream CompressImageData(Image image, Stream imageData, out string optimizedExtension)
         {
             var settings = _config.Optimizers["ImageMagickImageOptimizer"].Parameters;
 
