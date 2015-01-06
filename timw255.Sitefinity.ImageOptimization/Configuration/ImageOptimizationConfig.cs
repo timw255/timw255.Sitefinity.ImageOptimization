@@ -77,7 +77,7 @@ namespace timw255.Sitefinity.ImageOptimization.Configuration
                 Enabled = true
             };
 
-            imageOptimizerElement.Parameters.Add("imageQuality", "90");
+            imageOptimizerElement.Parameters.Add("imageQuality", "85");
 
             this.Optimizers.Add("ImageMagickImageOptimizer", imageOptimizerElement);
         }
