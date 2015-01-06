@@ -15,7 +15,7 @@ using timw255.Sitefinity.ImageOptimization.Configuration;
 namespace timw255.Sitefinity.ImageOptimization.Optimizer
 {
     /// <summary>
-    /// 
+    /// Base class for ImageOptimizers
     /// </summary>
     public abstract class ImageOptimizerBase
     {
@@ -43,9 +43,9 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
         }
 
         /// <summary>
-        /// 
+        /// Returns the total number of unoptimized images in the Sitefinity album with the specified Id
         /// </summary>
-        /// <param name="albumId"></param>
+        /// <param name="albumId">Id of the album</param>
         /// <returns></returns>
         public virtual int GetItemsCount(Guid albumId)
         {
@@ -53,28 +53,28 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
         }
 
         /// <summary>
-        /// 
+        /// Compress the image data for a Sitefinity image
         /// </summary>
-        /// <param name="image"></param>
-        /// <param name="imageData"></param>
-        /// <param name="optimizedExtension"></param>
+        /// <param name="image">Sitefinity image being optimized</param>
+        /// <param name="imageData">Uncompressed image data</param>
+        /// <param name="optimizedExtension">File extension of the resulting image stream being returned</param>
         /// <returns></returns>
         public abstract Stream CompressImageData(Image image, Stream imageData, out string optimizedExtension);
 
         /// <summary>
-        /// 
+        /// Optimize a single Sitefinity image
         /// </summary>
-        /// <param name="parentId"></param>
-        /// <param name="imageId"></param>
-        public virtual void OptimizeImage(Guid parentId, Guid imageId)
+        /// <param name="parentId">Id of the album that contains the image</param>
+        /// <param name="imageId">Id of the master version of the image</param>
+        public virtual void OptimizeImage(Guid albumId, Guid masterImageId)
         {
-            Album album = Manager.GetAlbum(parentId);
+            Album album = Manager.GetAlbum(albumId);
 
             // This saves us from having to care about BlobStorage later in the method
             var albumProvider = (LibrariesDataProvider)album.Provider;
 
             // This should exist!
-            var image = album.Images().Where(i => i.Id == imageId && i.Status == ContentLifecycleStatus.Master && !i.GetValue<bool>("Optimized")).Single();
+            var image = album.Images().Where(i => i.Id == masterImageId && i.Status == ContentLifecycleStatus.Master && !i.GetValue<bool>("Optimized")).Single();
 
             // Pull the Stream of the image from the provider.
             Stream imageData = albumProvider.Download(image);
@@ -111,6 +111,7 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
 
                     Image liveImage = (Image)Manager.Lifecycle.GetLive(image);
 
+                    // Probably not the best idea ever BUT, it needs to replace the FileId without tripping workflow.
                     liveImage.FileId = image.FileId;
                     liveImage.SetValue("Optimized", true);
 
@@ -127,9 +128,9 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
         }
 
         /// <summary>
-        /// 
+        /// Optimize all images in the Sitefinity album with the specified Id
         /// </summary>
-        /// <param name="albumId"></param>
+        /// <param name="albumId">Id of the album to be optimized</param>
         public virtual void OptimizeAlbum(Guid albumId)
         {
             // Get all the unoptimized image items

@@ -345,17 +345,6 @@ namespace timw255.Sitefinity.ImageOptimization
             var imagesActionColumn = (ActionMenuColumnElement)imagesGridMode.ColumnsConfig.Values.Where(c => c.Name == "Actions").First();
             var imagesActionMenuItems = imagesActionColumn.MenuItems;
 
-            //var literalWidgetElement = new LiteralWidgetElement(imagesActionMenuItems);
-
-            //literalWidgetElement.Name = "OptimizeSep";
-            //literalWidgetElement.CssClass = "sfSeparator";
-            //literalWidgetElement.Text = "More...";
-            //literalWidgetElement.WrapperTagKey = HtmlTextWriterTag.Li;
-            //literalWidgetElement.WidgetType = typeof(LiteralWidget);
-            //literalWidgetElement.IsSeparator = true;
-
-            //imagesActionColumn.MenuItems.Add(literalWidgetElement);
-
             var commandWidget = new CommandWidgetElement(imagesActionMenuItems);
 
             commandWidget.ButtonType = CommandButtonType.Standard;
