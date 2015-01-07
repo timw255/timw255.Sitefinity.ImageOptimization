@@ -8,12 +8,15 @@ using System.Threading.Tasks;
 using Telerik.Sitefinity.Abstractions;
 using Telerik.Sitefinity.Configuration;
 using Telerik.Sitefinity.Localization;
+using Telerik.Sitefinity.Modules.GenericContent.Configuration;
+using Telerik.Sitefinity.Web.Configuration;
+using timw255.Sitefinity.ImageOptimization.Data.EntityFramework;
 using timw255.Sitefinity.ImageOptimization.Optimizer;
 
 namespace timw255.Sitefinity.ImageOptimization.Configuration
 {
     [ObjectInfo(Title = "ImageOptimization", Description = "Configuration for the Image Optimization module")]
-    public class ImageOptimizationConfig : ConfigSection
+    public class ImageOptimizationConfig : ModuleConfigBase
     {
         [ObjectInfo(Title = "Default Optimizer", Description = "Default optimizer used for image optimization")]
         [ConfigurationProperty("defaultOptimizer", DefaultValue = "ImageMagickImageOptimizer")]
@@ -29,6 +32,23 @@ namespace timw255.Sitefinity.ImageOptimization.Configuration
             }
         }
 
+        /// <summary>
+        /// Gets or sets the name of the default data provider. 
+        /// </summary>
+        [DescriptionResource(typeof(ConfigDescriptions), "DefaultProvider")]
+        [ConfigurationProperty("defaultProvider", DefaultValue = "ImageOptimizationEFDataProvider")]
+        public override string DefaultProvider
+        {
+            get
+            {
+                return (string)this["defaultProvider"];
+            }
+            set
+            {
+                this["defaultProvider"] = value;
+            }
+        }
+
         [ConfigurationProperty("optimizers")]
         public virtual ConfigElementDictionary<string, ImageOptimizerSettings> Optimizers
         {
@@ -36,6 +56,18 @@ namespace timw255.Sitefinity.ImageOptimization.Configuration
             {
                 return (ConfigElementDictionary<string, ImageOptimizerSettings>)this["optimizers"];
             }
+        }
+
+        protected override void InitializeDefaultProviders(ConfigElementDictionary<string, DataProviderSettings> providers)
+        {
+            providers.Add(new DataProviderSettings(providers)
+            {
+                Name = "ImageOptimizationEFDataProvider",
+                Title = "ImageOptimizationEFDataProvider",
+                Description = "A provider that stores image optimization data in database using Entity Framework.",
+                ProviderType = typeof(ImageOptimizationEFDataProvider),
+                Parameters = new NameValueCollection() { { "applicationName", "/ImageOptimization" } }
+            });
         }
 
         protected override void OnPropertiesInitialized()
