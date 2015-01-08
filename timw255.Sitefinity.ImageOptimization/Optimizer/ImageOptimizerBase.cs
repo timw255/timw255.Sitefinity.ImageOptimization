@@ -130,6 +130,15 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
                     OptimizationManager.SaveChanges();
 
                     LibManager.SaveChanges();
+
+                    // Check to see if this image is already published.
+                    // If it is, we need to publish the "Master" to update "Live"
+                    if (image.GetWorkflowState() == "Published")
+                    {
+                        var bag = new Dictionary<string, string>();
+                        bag.Add("ContentType", typeof(Image).FullName);
+                        WorkflowManager.MessageWorkflow(image.Id, typeof(Image), albumProvider.Name, "Publish", false, bag);
+                    }
                 }
 
                 // Let concerned parties know that processing has completed for this item
