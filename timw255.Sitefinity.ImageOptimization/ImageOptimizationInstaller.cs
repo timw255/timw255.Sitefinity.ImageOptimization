@@ -59,14 +59,10 @@ namespace timw255.Sitefinity.ImageOptimization
                     Title = ImageOptimizationModule.ModuleTitle,
                     Description = ImageOptimizationModule.ModuleDescription,
                     Type = typeof(ImageOptimizationModule).AssemblyQualifiedName,
-                    // Change to StartupType.OnApplicationStart if you wish to have the module automatically installed.
                     StartupType = StartupType.Disabled
                 });
 
                 configManager.SaveSection(modulesConfig.Section);
-
-                // Uncomment if you change the StartupType to OnApplicationStart
-                //SystemManager.RestartApplication(false);
             }
         }
         #endregion

@@ -102,6 +102,11 @@ namespace timw255.Sitefinity.ImageOptimization.Models
         public Guid ImageId { get; set; }
 
         /// <summary>
+        /// Gets or sets the OptimizedFileId.
+        /// </summary>
+        public Guid OptimizedFileId { get; set; }
+
+        /// <summary>
         /// Gets or sets the InitialTotalSize.
         /// </summary>
         public long InitialTotalSize { get; set; }

@@ -30,9 +30,17 @@ namespace timw255.Sitefinity.ImageOptimization.Lifecycle
                 var masterImage = masterItem as Image;
                 var liveImage = liveItem as Image;
 
-                if (liveImage != null && masterImage.FileId != liveImage.FileId)
+                if (liveImage != null)
                 {
-                    masterImage.SetValue("Optimized", false);
+                    var optimizationManager = ImageOptimizationManager.GetManager();
+
+                    var entry = optimizationManager.GetImageOptimizationLogEntrys().Where(e => e.ImageId == masterImage.Id).FirstOrDefault();
+
+                    if (entry != null && masterImage.FileId != entry.OptimizedFileId)
+                    {
+                        optimizationManager.DeleteImageOptimizationLogEntry(entry);
+                        optimizationManager.SaveChanges();
+                    }
                 }
 
                 return base.ExecuteOnPublish(masterItem as ILifecycleDataItemGeneric, liveItem, culture, publicationDate);

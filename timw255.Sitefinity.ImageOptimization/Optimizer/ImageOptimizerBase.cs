@@ -37,6 +37,19 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
             }
         }
 
+        private ImageOptimizationManager _optimizationManager;
+        internal ImageOptimizationManager OptimizationManager
+        {
+            get
+            {
+                if (_optimizationManager == null)
+                {
+                    _optimizationManager = ImageOptimizationManager.GetManager();
+                }
+                return _optimizationManager;
+            }
+        }
+
         public ImageOptimizerBase()
         {
             _config = Config.Get<ImageOptimizationConfig>();
@@ -74,7 +87,7 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
             var albumProvider = (LibrariesDataProvider)album.Provider;
 
             // This should exist!
-            var image = album.Images().Where(i => i.Id == masterImageId && i.Status == ContentLifecycleStatus.Master && !i.GetValue<bool>("Optimized")).Single();
+            var image = album.Images().Where(i => i.Id == masterImageId && i.Status == ContentLifecycleStatus.Master).Single();
 
             // Pull the Stream of the image from the provider.
             Stream imageData = albumProvider.Download(image);
@@ -96,24 +109,25 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
                 // 2. Some other mechanism is being used to handle the item updates (callbacks)
                 if (optimizedImage != null)
                 {
+                    var oLogEntry = OptimizationManager.CreateImageOptimizationLogEntry();
+
+                    oLogEntry.ImageId = image.Id;
+                    oLogEntry.InitialFileExtension = image.Extension;
+                    oLogEntry.InitialTotalSize = image.TotalSize;
+                    
                     // Check out the master to get a temp version.
                     Image temp = Manager.Lifecycle.CheckOut(image) as Image;
 
                     // Make the modifications to the temp version.
                     Manager.Upload(temp, optimizedImage, optimizedExtension);
 
-                    // Set the Optimized flag to prevent re-processing images for no reason.
-                    temp.SetValue("Optimized", true);
-
                     // Check in the temp version.
                     // After the check in the temp version is deleted.
                     Manager.Lifecycle.CheckIn(temp);
 
-                    Image liveImage = (Image)Manager.Lifecycle.GetLive(image);
+                    oLogEntry.OptimizedFileId = image.FileId;
 
-                    // Probably not the best idea ever BUT, it needs to replace the FileId without tripping workflow.
-                    liveImage.FileId = image.FileId;
-                    liveImage.SetValue("Optimized", true);
+                    OptimizationManager.SaveChanges();
 
                     Manager.SaveChanges();
                 }
@@ -134,7 +148,10 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
         public virtual void OptimizeAlbum(Guid albumId)
         {
             // Get all the unoptimized image items
-            var images = Manager.GetAlbum(albumId).Images().Where(i => i.Status == ContentLifecycleStatus.Master && !i.GetValue<bool>("Optimized"));
+
+            var optimizedImageIds = new HashSet<Guid>(OptimizationManager.GetImageOptimizationLogEntrys().Select(e => e.ImageId));
+            var images = Manager.GetAlbum(albumId).Images()
+                .Where(i => i.Status == ContentLifecycleStatus.Master && !optimizedImageIds.Contains(i.Id));
 
             foreach (Image image in images)
             {

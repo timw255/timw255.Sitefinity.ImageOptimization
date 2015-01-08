@@ -93,6 +93,7 @@ namespace timw255.Sitefinity.ImageOptimization
             );
 
             this.RegisterLifecycleDecorators();
+            this.RegisterEventListeners();
         }
 
         private void RegisterLifecycleDecorators()
@@ -106,6 +107,58 @@ namespace timw255.Sitefinity.ImageOptimization
             );
         }
 
+        private void RegisterEventListeners()
+        {
+            EventHub.Subscribe<IDataEvent>(Content_Action);
+            EventHub.Subscribe<IRecyclableDataEvent>(recycleBinEventHandler);
+        }
+
+        // will be moved when functional
+        private void Content_Action(IDataEvent evt)
+        {
+            var action = evt.Action;
+            var contentType = evt.ItemType;
+            
+            if (contentType == typeof(Image) && (action == "Publish" || action == "Updated"))
+            {
+                var itemId = evt.ItemId;
+                var providerName = evt.ProviderName;
+                var manager = ManagerBase.GetMappedManager(contentType, providerName);
+                var item = manager.GetItemOrDefault(contentType, itemId) as Image;
+
+                if (item.Status == ContentLifecycleStatus.Master)
+                {
+                    var optimizationManager = ImageOptimizationManager.GetManager();
+
+                    var entry = optimizationManager.GetImageOptimizationLogEntrys().Where(e => e.ImageId == item.Id).FirstOrDefault();
+
+                    if (entry != null && item.FileId != entry.OptimizedFileId)
+                    {
+                        optimizationManager.DeleteImageOptimizationLogEntry(entry);
+                        optimizationManager.SaveChanges();
+                    }
+                }
+            }
+        }
+
+        private void recycleBinEventHandler(IRecyclableDataEvent evt)
+        {
+            if (evt.RecycleBinAction == RecycleBinAction.PermanentDelete)
+            {
+                var itemId = evt.ItemId;
+
+                var optimizationManager = ImageOptimizationManager.GetManager();
+
+                var entry = optimizationManager.GetImageOptimizationLogEntrys().Where(e => e.ImageId == itemId).FirstOrDefault();
+
+                if (entry != null)
+                {
+                    optimizationManager.DeleteImageOptimizationLogEntry(entry);
+                    optimizationManager.SaveChanges();
+                }
+            }
+        }
+
         /// <summary>
         /// Installs this module in Sitefinity system for the first time.
         /// </summary>
@@ -113,8 +166,6 @@ namespace timw255.Sitefinity.ImageOptimization
         public override void Install(SiteInitializer initializer)
         {
             this.InstallVirtualPaths(initializer);
-            //this.InstallPageWidgets(initializer);
-            this.InstallCustomFields(initializer);
             this.InstallBackendScripts(initializer);
             this.InstallActionMenuItems(initializer);
         }
@@ -243,31 +294,6 @@ namespace timw255.Sitefinity.ImageOptimization
         #endregion
 
         #region Widgets
-        /// <summary>
-        /// Installs the page widgets.
-        /// </summary>
-        /// <param name="initializer">The initializer.</param>
-        private void InstallPageWidgets(SiteInitializer initializer)
-        {
-        }
-
-        private void InstallCustomFields(SiteInitializer initializer)
-        {
-            MetadataManager metaManager = MetadataManager.GetManager();
-
-            if (metaManager.GetMetaType(typeof(Image)) == null)
-            {
-                metaManager.CreateMetaType(typeof(Image));
-                metaManager.SaveChanges();
-            }
-
-            App.WorkWith()
-                .DynamicData()
-                .Type(typeof(Image))
-                .Field()
-                .TryCreateNew("Optimized", typeof(bool))
-                .SaveChanges(true);
-        }
 
         private void InstallBackendScripts(SiteInitializer initializer)
         {
