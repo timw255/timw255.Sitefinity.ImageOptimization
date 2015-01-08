@@ -75,22 +75,26 @@ namespace timw255.Sitefinity.ImageOptimization.MVC.Controllers
             using (var webClient = new WebClient())
             using (var stream = webClient.OpenRead(krakedUrl))
             {   
+                var optimizationManager = ImageOptimizationManager.GetManager();
+                var oLogEntry = optimizationManager.CreateImageOptimizationLogEntry();
+
+                oLogEntry.ImageId = image.Id;
+                oLogEntry.InitialFileExtension = image.Extension;
+                oLogEntry.InitialTotalSize = image.TotalSize;
+
                 // Check out the master to get a temp version.
                 Image temp = _librariesManager.Lifecycle.CheckOut(image) as Image;
 
                 // Make the modifications to the temp version.
                 _librariesManager.Upload(temp, stream, Path.GetExtension(fileName));
 
-                temp.SetValue("Optimized", true);
-
                 // Check in the temp version.
                 // After the check in the temp version is deleted.
                 _librariesManager.Lifecycle.CheckIn(temp);
 
-                Image liveImage = (Image)_librariesManager.Lifecycle.GetLive(image);
+                oLogEntry.OptimizedFileId = image.FileId;
 
-                liveImage.FileId = image.FileId;
-                liveImage.SetValue("Optimized", true);
+                optimizationManager.SaveChanges();
 
                 _librariesManager.SaveChanges();
             }

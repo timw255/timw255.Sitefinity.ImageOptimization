@@ -24,16 +24,16 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
         public delegate void ImageOptimizedHandler(object o, EventArgs e);
         public event ImageOptimizedHandler OnImageOptimized;
 
-        private LibrariesManager _manager;
-        internal LibrariesManager Manager
+        private LibrariesManager _libManager;
+        internal LibrariesManager LibManager
         {
             get
             {
-                if (_manager == null)
+                if (_libManager == null)
                 {
-                    _manager = LibrariesManager.GetManager();
+                    _libManager = LibrariesManager.GetManager();
                 }
-                return _manager;
+                return _libManager;
             }
         }
 
@@ -62,7 +62,7 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
         /// <returns></returns>
         public virtual int GetItemsCount(Guid albumId)
         {
-            return Manager.GetAlbum(albumId).Images().Where(i => i.Status == ContentLifecycleStatus.Master && !i.GetValue<bool>("Optimized")).Count();
+            return LibManager.GetAlbum(albumId).Images().Where(i => i.Status == ContentLifecycleStatus.Master && !i.GetValue<bool>("Optimized")).Count();
         }
 
         /// <summary>
@@ -81,7 +81,7 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
         /// <param name="imageId">Id of the master version of the image</param>
         public virtual void OptimizeImage(Guid albumId, Guid masterImageId)
         {
-            Album album = Manager.GetAlbum(albumId);
+            Album album = LibManager.GetAlbum(albumId);
 
             // This saves us from having to care about BlobStorage later in the method
             var albumProvider = (LibrariesDataProvider)album.Provider;
@@ -116,20 +116,20 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
                     oLogEntry.InitialTotalSize = image.TotalSize;
                     
                     // Check out the master to get a temp version.
-                    Image temp = Manager.Lifecycle.CheckOut(image) as Image;
+                    Image temp = LibManager.Lifecycle.CheckOut(image) as Image;
 
                     // Make the modifications to the temp version.
-                    Manager.Upload(temp, optimizedImage, optimizedExtension);
+                    LibManager.Upload(temp, optimizedImage, optimizedExtension);
 
                     // Check in the temp version.
                     // After the check in the temp version is deleted.
-                    Manager.Lifecycle.CheckIn(temp);
+                    LibManager.Lifecycle.CheckIn(temp);
 
                     oLogEntry.OptimizedFileId = image.FileId;
 
                     OptimizationManager.SaveChanges();
 
-                    Manager.SaveChanges();
+                    LibManager.SaveChanges();
                 }
 
                 // Let concerned parties know that processing has completed for this item
@@ -148,9 +148,8 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
         public virtual void OptimizeAlbum(Guid albumId)
         {
             // Get all the unoptimized image items
-
             var optimizedImageIds = new HashSet<Guid>(OptimizationManager.GetImageOptimizationLogEntrys().Select(e => e.ImageId));
-            var images = Manager.GetAlbum(albumId).Images()
+            var images = LibManager.GetAlbum(albumId).Images()
                 .Where(i => i.Status == ContentLifecycleStatus.Master && !optimizedImageIds.Contains(i.Id));
 
             foreach (Image image in images)
