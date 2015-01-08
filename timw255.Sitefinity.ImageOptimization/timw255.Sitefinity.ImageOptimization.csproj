@@ -455,6 +455,7 @@
   <ItemGroup>
     <Compile Include="Configuration\ImageOptimizationConfig.cs" />
     <Compile Include="Configuration\ImageOptimizerSettings.cs" />
+    <Compile Include="ImageOptimizationEventHandlers.cs" />
     <Compile Include="ImageOptimizationManager.cs" />
     <Compile Include="ImageOptimizationDataProvider.cs" />
     <Compile Include="Data\EntityFramework\ImageOptimizationEFDataConnection.cs" />

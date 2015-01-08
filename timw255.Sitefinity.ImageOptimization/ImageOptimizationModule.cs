@@ -92,71 +92,25 @@ namespace timw255.Sitefinity.ImageOptimization
                 defaults: new { id = RouteParameter.Optional }
             );
 
-            this.RegisterLifecycleDecorators();
-            this.RegisterEventListeners();
+            //this.RegisterLifecycleDecorators();
+            this.RegisterEventHandlers();
         }
 
-        private void RegisterLifecycleDecorators()
+        //private void RegisterLifecycleDecorators()
+        //{
+        //    ObjectFactory.Container.RegisterType<ILifecycleDecorator, OptimizationDecorator>(typeof(LibrariesManager).FullName,
+        //        new InjectionConstructor(
+        //           new InjectionParameter<ILifecycleManager>(null),
+        //           new InjectionParameter<Action<Content, Content>>(null),
+        //           new InjectionParameter<Type[]>(null)
+        //        )
+        //    );
+        //}
+
+        private void RegisterEventHandlers()
         {
-            ObjectFactory.Container.RegisterType<ILifecycleDecorator, OptimizationDecorator>(typeof(LibrariesManager).FullName,
-                new InjectionConstructor(
-                   new InjectionParameter<ILifecycleManager>(null),
-                   new InjectionParameter<Action<Content, Content>>(null),
-                   new InjectionParameter<Type[]>(null)
-                )
-            );
-        }
-
-        private void RegisterEventListeners()
-        {
-            EventHub.Subscribe<IDataEvent>(Content_Action);
-            EventHub.Subscribe<IRecyclableDataEvent>(recycleBinEventHandler);
-        }
-
-        // will be moved when functional
-        private void Content_Action(IDataEvent evt)
-        {
-            var action = evt.Action;
-            var contentType = evt.ItemType;
-            
-            if (contentType == typeof(Image) && (action == "Publish" || action == "Updated"))
-            {
-                var itemId = evt.ItemId;
-                var providerName = evt.ProviderName;
-                var manager = ManagerBase.GetMappedManager(contentType, providerName);
-                var item = manager.GetItemOrDefault(contentType, itemId) as Image;
-
-                if (item.Status == ContentLifecycleStatus.Master)
-                {
-                    var optimizationManager = ImageOptimizationManager.GetManager();
-
-                    var entry = optimizationManager.GetImageOptimizationLogEntrys().Where(e => e.ImageId == item.Id).FirstOrDefault();
-
-                    if (entry != null && item.FileId != entry.OptimizedFileId)
-                    {
-                        optimizationManager.DeleteImageOptimizationLogEntry(entry);
-                        optimizationManager.SaveChanges();
-                    }
-                }
-            }
-        }
-
-        private void recycleBinEventHandler(IRecyclableDataEvent evt)
-        {
-            if (evt.RecycleBinAction == RecycleBinAction.PermanentDelete)
-            {
-                var itemId = evt.ItemId;
-
-                var optimizationManager = ImageOptimizationManager.GetManager();
-
-                var entry = optimizationManager.GetImageOptimizationLogEntrys().Where(e => e.ImageId == itemId).FirstOrDefault();
-
-                if (entry != null)
-                {
-                    optimizationManager.DeleteImageOptimizationLogEntry(entry);
-                    optimizationManager.SaveChanges();
-                }
-            }
+            EventHub.Subscribe<IDataEvent>(ImageOptimizationEventHandlers.ContentActionEventHandler);
+            EventHub.Subscribe<IRecyclableDataEvent>(ImageOptimizationEventHandlers.RecycleBinEventHandler);
         }
 
         /// <summary>
