@@ -9,6 +9,7 @@ using Telerik.Sitefinity.GenericContent.Model;
 using Telerik.Sitefinity.Libraries.Model;
 using Telerik.Sitefinity.Model;
 using Telerik.Sitefinity.Modules.Libraries;
+using Telerik.Sitefinity.Versioning;
 using Telerik.Sitefinity.Workflow;
 using timw255.Sitefinity.ImageOptimization.Configuration;
 

@@ -121,7 +121,6 @@ namespace timw255.Sitefinity.ImageOptimization
         {
             this.InstallVirtualPaths(initializer);
             this.InstallBackendScripts(initializer);
-            this.InstallActionMenuItems(initializer);
         }
 
         /// <summary>
@@ -142,43 +141,7 @@ namespace timw255.Sitefinity.ImageOptimization
         {
             base.Uninstall(initializer);
 
-            this.UninstallActionMenuItems(initializer);
             this.UninstallBackendScripts(initializer);
-        }
-
-        private void UninstallActionMenuItems(SiteInitializer initializer)
-        {
-            string commandPattern = @"(?:\s+)?<li class='sfSeparator'>(?:\s+)?</li>(?:\s+)?<li>(?:\s+)?<a sys:href='javascript:void\(0\);' class='sf_binderCommand_optimize'>Optimize<\/a>(?:\s+)?<\/li>";
-
-            var manager = ConfigManager.GetManager();
-            var librariesConfig = manager.GetSection<LibrariesConfig>();
-
-            var albumsBackendList = (MasterGridViewElement)librariesConfig.ContentViewControls["AlbumsBackend"].ViewsConfig.Values.Where(v => v.ViewName == "AlbumsBackendList").First();
-            var gridMode = (GridViewModeElement)albumsBackendList.ViewModesConfig.ToList<ViewModeElement>().Where(m => m.Name == "Grid").First();
-            var column = (DataColumnElement)gridMode.ColumnsConfig.Values.Where(c => c.Name == "Actions").First();
-
-            string currentClientTemplate = column.ClientTemplate;
-
-            if (Regex.IsMatch(currentClientTemplate, commandPattern))
-            {
-                string newClientTemplate = Regex.Replace(currentClientTemplate, commandPattern, "");
-
-                column.ClientTemplate = newClientTemplate;
-
-                manager.SaveSection(librariesConfig);
-            }
-
-            var imagesBackendList = (MasterGridViewElement)librariesConfig.ContentViewControls["ImagesBackend"].ViewsConfig.Values.Where(v => v.ViewName == "ImagesBackendList").First();
-            var imagesGridMode = (GridViewModeElement)imagesBackendList.ViewModesConfig.ToList<ViewModeElement>().Where(m => m.Name == "Grid").First();
-            var imagesActionColumn = (ActionMenuColumnElement)imagesGridMode.ColumnsConfig.Values.Where(c => c.Name == "Actions").First();
-            var imagesActionMenuItems = imagesActionColumn.MenuItems;
-
-            if (imagesActionMenuItems.Contains("Optimize"))
-            {
-                var item = imagesActionMenuItems.AsEnumerable().Where(i => i.Name == "Optimize").FirstOrDefault();
-
-                imagesActionMenuItems.Remove(item);
-            }
         }
 
         private void UninstallBackendScripts(SiteInitializer initializer)
@@ -214,6 +177,100 @@ namespace timw255.Sitefinity.ImageOptimization
                 manager.SaveSection(librariesConfig);
             }
         }
+
+        public override void Unload()
+        {
+            this.UnloadActionMenuItems();
+            base.Unload();
+        }
+
+        private void UnloadActionMenuItems()
+        {
+            string commandPattern = @"(?:\s+)?<li class='sfSeparator'>(?:\s+)?</li>(?:\s+)?<li>(?:\s+)?<a sys:href='javascript:void\(0\);' class='sf_binderCommand_optimize'>Optimize<\/a>(?:\s+)?<\/li>";
+
+            var manager = ConfigManager.GetManager();
+            var librariesConfig = manager.GetSection<LibrariesConfig>();
+
+            var albumsBackendList = (MasterGridViewElement)librariesConfig.ContentViewControls["AlbumsBackend"].ViewsConfig.Values.Where(v => v.ViewName == "AlbumsBackendList").First();
+            var gridMode = (GridViewModeElement)albumsBackendList.ViewModesConfig.ToList<ViewModeElement>().Where(m => m.Name == "Grid").First();
+            var column = (DataColumnElement)gridMode.ColumnsConfig.Values.Where(c => c.Name == "Actions").First();
+
+            string currentClientTemplate = column.ClientTemplate;
+
+            if (Regex.IsMatch(currentClientTemplate, commandPattern))
+            {
+                string newClientTemplate = Regex.Replace(currentClientTemplate, commandPattern, "");
+
+                column.ClientTemplate = newClientTemplate;
+
+                manager.SaveSection(librariesConfig);
+            }
+
+            var imagesBackendList = (MasterGridViewElement)librariesConfig.ContentViewControls["ImagesBackend"].ViewsConfig.Values.Where(v => v.ViewName == "ImagesBackendList").First();
+            var imagesGridMode = (GridViewModeElement)imagesBackendList.ViewModesConfig.ToList<ViewModeElement>().Where(m => m.Name == "Grid").First();
+            var imagesActionColumn = (ActionMenuColumnElement)imagesGridMode.ColumnsConfig.Values.Where(c => c.Name == "Actions").First();
+            var imagesActionMenuItems = imagesActionColumn.MenuItems;
+
+            if (imagesActionMenuItems.Contains("Optimize"))
+            {
+                var item = imagesActionMenuItems.AsEnumerable().Where(i => i.Name == "Optimize").FirstOrDefault();
+
+                imagesActionMenuItems.Remove(item);
+
+                manager.SaveSection(librariesConfig);
+            }
+        }
+
+        public override void Load()
+        {
+            base.Load();
+            this.LoadActionMenuItems();
+        }
+
+        private void LoadActionMenuItems()
+        {
+            string commandHTML = "<li class='sfSeparator'></li><li><a sys:href='javascript:void(0);' class='sf_binderCommand_optimize'>Optimize</a></li>";
+            string commandPattern = @"<li>(?:\s+)?<a sys:href='javascript:void\(0\);' class='sf_binderCommand_optimize'>Optimize<\/a>(?:\s+)?<\/li>";
+            string insertPointPattern = @"(?:\s+)?<li class='sfSeparator'>(?:\s+)?<\/li>(?:\s+)?<li>(?:\s+)?<a sys:href='javascript:void\(0\);' class='sf_binderCommand_relocateLibrary'>{\$LibrariesResources, RelocateLibrary\$}<\/a>(?:\s+)?<\/li>";
+
+            var manager = ConfigManager.GetManager();
+            var librariesConfig = manager.GetSection<LibrariesConfig>();
+
+            var albumsBackendList = (MasterGridViewElement)librariesConfig.ContentViewControls["AlbumsBackend"].ViewsConfig.Values.Where(v => v.ViewName == "AlbumsBackendList").First();
+            var gridMode = (GridViewModeElement)albumsBackendList.ViewModesConfig.ToList<ViewModeElement>().Where(m => m.Name == "Grid").First();
+            var column = (DataColumnElement)gridMode.ColumnsConfig.Values.Where(c => c.Name == "Actions").First();
+
+            string currentClientTemplate = column.ClientTemplate;
+
+            if (!Regex.IsMatch(currentClientTemplate, commandPattern))
+            {
+                var match = Regex.Match(currentClientTemplate, insertPointPattern);
+                string newClientTemplate = currentClientTemplate.Insert(match.Index, commandHTML);
+
+                column.ClientTemplate = newClientTemplate;
+
+                manager.SaveSection(librariesConfig);
+            }
+
+            var imagesBackendList = (MasterGridViewElement)librariesConfig.ContentViewControls["ImagesBackend"].ViewsConfig.Values.Where(v => v.ViewName == "ImagesBackendList").First();
+            var imagesGridMode = (GridViewModeElement)imagesBackendList.ViewModesConfig.ToList<ViewModeElement>().Where(m => m.Name == "Grid").First();
+            var imagesActionColumn = (ActionMenuColumnElement)imagesGridMode.ColumnsConfig.Values.Where(c => c.Name == "Actions").First();
+            var imagesActionMenuItems = imagesActionColumn.MenuItems;
+
+            var commandWidget = new CommandWidgetElement(imagesActionMenuItems);
+
+            commandWidget.ButtonType = CommandButtonType.Standard;
+            commandWidget.Name = "Optimize";
+            commandWidget.Text = "Optimize";
+            commandWidget.CommandName = "optimize";
+            commandWidget.WrapperTagKey = HtmlTextWriterTag.Li;
+            commandWidget.WidgetType = typeof(CommandWidgetElement);
+
+            imagesActionColumn.MenuItems.Add(commandWidget);
+
+            manager.SaveSection(librariesConfig);
+        }
+
         #endregion
 
         #region Public and overriden methods
@@ -293,50 +350,6 @@ namespace timw255.Sitefinity.ImageOptimization
 
                 manager.SaveSection(librariesConfig);
             }
-        }
-
-        private void InstallActionMenuItems(SiteInitializer initializer)
-        {
-            string commandHTML = "<li class='sfSeparator'></li><li><a sys:href='javascript:void(0);' class='sf_binderCommand_optimize'>Optimize</a></li>";
-            string commandPattern = @"<li>(?:\s+)?<a sys:href='javascript:void\(0\);' class='sf_binderCommand_optimize'>Optimize<\/a>(?:\s+)?<\/li>";
-            string insertPointPattern = @"(?:\s+)?<li class='sfSeparator'>(?:\s+)?<\/li>(?:\s+)?<li>(?:\s+)?<a sys:href='javascript:void\(0\);' class='sf_binderCommand_relocateLibrary'>{\$LibrariesResources, RelocateLibrary\$}<\/a>(?:\s+)?<\/li>";
-
-            var manager = ConfigManager.GetManager();
-            var librariesConfig = manager.GetSection<LibrariesConfig>();
-
-            var albumsBackendList = (MasterGridViewElement)librariesConfig.ContentViewControls["AlbumsBackend"].ViewsConfig.Values.Where(v => v.ViewName == "AlbumsBackendList").First();
-            var gridMode = (GridViewModeElement)albumsBackendList.ViewModesConfig.ToList<ViewModeElement>().Where(m => m.Name == "Grid").First();
-            var column = (DataColumnElement)gridMode.ColumnsConfig.Values.Where(c => c.Name == "Actions").First();
-
-            string currentClientTemplate = column.ClientTemplate;
-
-            if (!Regex.IsMatch(currentClientTemplate, commandPattern))
-            {
-                var match = Regex.Match(currentClientTemplate, insertPointPattern);
-                string newClientTemplate = currentClientTemplate.Insert(match.Index, commandHTML);
-
-                column.ClientTemplate = newClientTemplate;
-
-                manager.SaveSection(librariesConfig);
-            }
-
-            var imagesBackendList = (MasterGridViewElement)librariesConfig.ContentViewControls["ImagesBackend"].ViewsConfig.Values.Where(v => v.ViewName == "ImagesBackendList").First();
-            var imagesGridMode = (GridViewModeElement)imagesBackendList.ViewModesConfig.ToList<ViewModeElement>().Where(m => m.Name == "Grid").First();
-            var imagesActionColumn = (ActionMenuColumnElement)imagesGridMode.ColumnsConfig.Values.Where(c => c.Name == "Actions").First();
-            var imagesActionMenuItems = imagesActionColumn.MenuItems;
-
-            var commandWidget = new CommandWidgetElement(imagesActionMenuItems);
-
-            commandWidget.ButtonType = CommandButtonType.Standard;
-            commandWidget.Name = "Optimize";
-            commandWidget.Text = "Optimize";
-            commandWidget.CommandName = "optimize";
-            commandWidget.WrapperTagKey = HtmlTextWriterTag.Li;
-            commandWidget.WidgetType = typeof(CommandWidgetElement);
-
-            imagesActionColumn.MenuItems.Add(commandWidget);
-
-            manager.SaveSection(librariesConfig);
         }
 
         #endregion
