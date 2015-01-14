@@ -186,6 +186,7 @@ namespace timw255.Sitefinity.ImageOptimization
 
         private void UnloadActionMenuItems()
         {
+            bool saveConfig = false;
             string commandPattern = @"(?:\s+)?<li class='sfSeparator'>(?:\s+)?</li>(?:\s+)?<li>(?:\s+)?<a sys:href='javascript:void\(0\);' class='sf_binderCommand_optimize'>Optimize<\/a>(?:\s+)?<\/li>";
 
             var manager = ConfigManager.GetManager();
@@ -203,7 +204,7 @@ namespace timw255.Sitefinity.ImageOptimization
 
                 column.ClientTemplate = newClientTemplate;
 
-                manager.SaveSection(librariesConfig);
+                saveConfig = true;
             }
 
             var imagesBackendList = (MasterGridViewElement)librariesConfig.ContentViewControls["ImagesBackend"].ViewsConfig.Values.Where(v => v.ViewName == "ImagesBackendList").First();
@@ -217,7 +218,13 @@ namespace timw255.Sitefinity.ImageOptimization
 
                 imagesActionMenuItems.Remove(item);
 
+                saveConfig = true;
+            }
+
+            if (saveConfig)
+            {
                 manager.SaveSection(librariesConfig);
+                SystemManager.RestartApplication(true);
             }
         }
 
