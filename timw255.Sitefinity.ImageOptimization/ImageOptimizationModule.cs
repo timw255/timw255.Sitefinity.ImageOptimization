@@ -34,7 +34,6 @@ using Telerik.Sitefinity.Web.UI.Backend.Elements.Widgets;
 using Telerik.Sitefinity.Web.UI.ContentUI.Config;
 using Telerik.Sitefinity.Web.UI.ContentUI.Views.Backend.Master.Config;
 using timw255.Sitefinity.ImageOptimization.Configuration;
-using timw255.Sitefinity.ImageOptimization.Lifecycle;
 
 namespace timw255.Sitefinity.ImageOptimization
 {
@@ -92,20 +91,8 @@ namespace timw255.Sitefinity.ImageOptimization
                 defaults: new { id = RouteParameter.Optional }
             );
 
-            //this.RegisterLifecycleDecorators();
             this.RegisterEventHandlers();
         }
-
-        //private void RegisterLifecycleDecorators()
-        //{
-        //    ObjectFactory.Container.RegisterType<ILifecycleDecorator, OptimizationDecorator>(typeof(LibrariesManager).FullName,
-        //        new InjectionConstructor(
-        //           new InjectionParameter<ILifecycleManager>(null),
-        //           new InjectionParameter<Action<Content, Content>>(null),
-        //           new InjectionParameter<Type[]>(null)
-        //        )
-        //    );
-        //}
 
         private void RegisterEventHandlers()
         {

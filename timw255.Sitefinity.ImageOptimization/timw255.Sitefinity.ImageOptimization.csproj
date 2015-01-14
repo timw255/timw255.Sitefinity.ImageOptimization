@@ -473,7 +473,6 @@
     <Compile Include="Models\ImageOptimizationLogEntry.cs" />
     <Compile Include="MVC\Controllers\KrakenCallbackController.cs" />
     <Compile Include="ImageOptimizationResources.cs" />
-    <Compile Include="Lifecycle\OptimizationDecorator.cs" />
     <Compile Include="MVC\Controllers\OptimizationController.cs" />
     <Compile Include="Optimizer\ImageMagickImageOptimizer.cs" />
     <Compile Include="Optimizer\ImageOptimizerBase.cs" />
