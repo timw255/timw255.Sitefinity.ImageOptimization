@@ -63,7 +63,11 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
         /// <returns></returns>
         public virtual int GetItemsCount(Guid albumId)
         {
-            return LibManager.GetAlbum(albumId).Images().Where(i => i.Status == ContentLifecycleStatus.Master && !i.GetValue<bool>("Optimized")).Count();
+            var optimizedImageIds = new HashSet<Guid>(OptimizationManager.GetImageOptimizationLogEntrys().Select(e => e.ImageId));
+            var images = LibManager.GetAlbum(albumId).Images()
+                .Where(i => i.Status == ContentLifecycleStatus.Master && !optimizedImageIds.Contains(i.Id));
+
+            return images.Count();
         }
 
         /// <summary>
