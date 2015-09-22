@@ -22,7 +22,7 @@ using timw255.Sitefinity.ImageOptimization.Configuration;
 using timw255.Sitefinity.ImageOptimization.Optimizer;
 using timw255.Sitefinity.ImageOptimization.Tasks;
 
-namespace timw255.Sitefinity.ImageOptimization.MVC.Controllers
+namespace timw255.Sitefinity.ImageOptimization.API.Controllers
 {
     public class OptimizationController : ApiController
     {
