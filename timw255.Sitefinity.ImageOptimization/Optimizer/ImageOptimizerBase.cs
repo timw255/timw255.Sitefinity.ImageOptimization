@@ -164,7 +164,7 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
             // Get all the unoptimized image items
             var optimizedImageIds = new HashSet<Guid>(OptimizationManager.GetImageOptimizationLogEntrys().Select(e => e.ImageId));
             var images = LibManager.GetAlbum(albumId).Images()
-                .Where(i => i.Status == ContentLifecycleStatus.Master && !optimizedImageIds.Contains(i.Id)).ToList();
+                .Where(i => i.Status == ContentLifecycleStatus.Master && !optimizedImageIds.Contains(i.Id));
 
             foreach (Image image in images)
             {

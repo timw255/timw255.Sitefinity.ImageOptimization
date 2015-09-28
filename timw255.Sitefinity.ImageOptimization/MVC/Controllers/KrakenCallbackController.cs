@@ -19,7 +19,7 @@ using Telerik.Sitefinity.Workflow;
 using timw255.Sitefinity.ImageOptimization.Configuration;
 using timw255.Sitefinity.ImageOptimization.Tasks;
 
-namespace timw255.Sitefinity.ImageOptimization.API.Controllers
+namespace timw255.Sitefinity.ImageOptimization.MVC.Controllers
 {
     public class KrakenIOCallbackController : ApiController
     {

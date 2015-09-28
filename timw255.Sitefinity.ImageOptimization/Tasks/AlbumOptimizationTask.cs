@@ -73,10 +73,9 @@ namespace timw255.Sitefinity.ImageOptimization.Tasks
             TaskProgressEventArgs taskProgressEventArg = new TaskProgressEventArgs()
             {
                 Progress = this._currentIndex * 100 / this._itemsCount,
-                StatusMessage = " "
+                StatusMessage = ""
             };
             TaskProgressEventArgs taskProgressEventArg1 = taskProgressEventArg;
-			taskProgressEventArg1.StatusMessage = taskProgressEventArg1.Progress == 100 ? "Done" : " ";
             this.OnProgressChanged(taskProgressEventArg1);
             if (taskProgressEventArg1.Stopped)
             {

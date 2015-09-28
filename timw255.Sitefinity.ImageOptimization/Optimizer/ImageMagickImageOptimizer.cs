@@ -12,68 +12,55 @@ using timw255.Sitefinity.ImageOptimization.Configuration;
 
 namespace timw255.Sitefinity.ImageOptimization.Optimizer
 {
-	public class ImageMagickImageOptimizer : ImageOptimizerBase
-	{
-		public ImageMagickImageOptimizer()
-		{
-		}
+    public class ImageMagickImageOptimizer : ImageOptimizerBase
+    {
+        public ImageMagickImageOptimizer()
+        {
+        }
 
-		public override Stream CompressImageData(Image image, Stream imageData, out string optimizedExtension)
-		{
-			var settings = _config.Optimizers["ImageMagickImageOptimizer"].Parameters;
+        public override Stream CompressImageData(Image image, Stream imageData, out string optimizedExtension)
+        {
+            var settings = _config.Optimizers["ImageMagickImageOptimizer"].Parameters;
 
-			int _imageQuality = Int32.Parse(settings["imageQuality"]);
+            int _imageQuality = Int32.Parse(settings["imageQuality"]);
 
-			MagickReadSettings magickSettings = new MagickReadSettings();
-			if (image.Extension != null)
-			{
-				switch (image.Extension.ToLower())
-				{
-					case ".png":
-						magickSettings.Format = MagickFormat.Png;
-						break;
-					case ".jpg":
-						magickSettings.Format = MagickFormat.Jpg;
-						break;
-					case ".jpeg":
-						magickSettings.Format = MagickFormat.Jpeg;
-						break;
-					case ".bmp":
-						magickSettings.Format = MagickFormat.Bmp;
-						break;
-					default:
-						magickSettings.Format = MagickFormat.Jpg;
-						break;
-				}
+            MagickReadSettings magickSettings = new MagickReadSettings();
 
-				try
-				{
-					using (MagickImage img = new MagickImage(imageData, magickSettings))
-					{
-						MemoryStream compressed = new MemoryStream();
+            switch (image.Extension.ToLower())
+            {
+                case ".png":
+                    magickSettings.Format = MagickFormat.Png;
+                    break;
+                case ".jpg":
+                    magickSettings.Format = MagickFormat.Jpg;
+                    break;
+                case ".jpeg":
+                    magickSettings.Format = MagickFormat.Jpeg;
+                    break;
+                case ".bmp":
+                    magickSettings.Format = MagickFormat.Bmp;
+                    break;
+                default:
+                    magickSettings.Format = MagickFormat.Jpg;
+                    break;
+            }
 
-						img.Quality = _imageQuality;
-						img.Write(compressed);
+            using (MagickImage img = new MagickImage(imageData, magickSettings))
+            {
+                MemoryStream compressed = new MemoryStream();
 
-						if (compressed == null)
-						{
-							optimizedExtension = "";
-							return null;
-						}
+                img.Quality = _imageQuality;
+                img.Write(compressed);
 
-						optimizedExtension = Path.GetExtension(image.FilePath);
-						return compressed;
-					}
-				}
-				catch (MagickCorruptImageErrorException ex)
-				{
-					Telerik.Sitefinity.Abstractions.Log.Write(ex, Telerik.Sitefinity.Abstractions.ConfigurationPolicy.ErrorLog);
-					optimizedExtension = "";
-					return null;
-				}
-			}
-			optimizedExtension = "";
-			return null;
-		}
-	}
+                if (compressed == null)
+                {
+                    optimizedExtension = "";
+                    return null;
+                }
+
+                optimizedExtension = Path.GetExtension(image.FilePath);
+                return compressed;
+            }
+        }
+    }
 }
