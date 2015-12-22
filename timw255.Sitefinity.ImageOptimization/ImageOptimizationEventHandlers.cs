@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Telerik.Sitefinity.Data;
 using Telerik.Sitefinity.Data.Events;
 using Telerik.Sitefinity.GenericContent.Model;
 using Telerik.Sitefinity.Libraries.Model;
+using Telerik.Sitefinity.Modules.Libraries;
 
 namespace timw255.Sitefinity.ImageOptimization
 {
@@ -30,10 +33,25 @@ namespace timw255.Sitefinity.ImageOptimization
 
                     var entry = optimizationManager.GetImageOptimizationLogEntrys().Where(e => e.ImageId == item.Id).FirstOrDefault();
 
-                    if (entry != null && item.FileId != entry.OptimizedFileId)
+                    if (entry == null)
                     {
-                        optimizationManager.DeleteImageOptimizationLogEntry(entry);
+                        entry = optimizationManager.CreateImageOptimizationLogEntry();
+
+                        entry.ImageId = item.Id;
+                        entry.Fingerprint = ImageOptimizationHelper.GetImageFingerprint(item.Id);
+                        entry.InitialFileExtension = item.Extension;
+                        entry.InitialTotalSize = item.TotalSize;
+
                         optimizationManager.SaveChanges();
+                    }
+                    else
+                    {
+                        if (entry.OptimizedFileId != Guid.Empty && item.FileId != entry.OptimizedFileId)
+                        {
+                            entry.Fingerprint = ImageOptimizationHelper.GetImageFingerprint(item.Id);
+                            entry.OptimizedFileId = Guid.Empty;
+                            optimizationManager.SaveChanges();
+                        }
                     }
                 }
             }

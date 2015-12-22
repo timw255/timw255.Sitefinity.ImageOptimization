@@ -16,6 +16,7 @@ namespace timw255.Sitefinity.ImageOptimization.Data.EntityFramework.EntityConfig
             this.ToTable("ImageOptimization_ImageOptimizationLogEntrys");
             this.HasKey(x => x.Id);
             this.Property(x => x.ImageId).IsRequired();
+            this.Property(x => x.Fingerprint).IsRequired();
             this.Property(x => x.OptimizedFileId);
             this.Property(x => x.InitialTotalSize);
             this.Property(x => x.InitialFileExtension).HasMaxLength(255);

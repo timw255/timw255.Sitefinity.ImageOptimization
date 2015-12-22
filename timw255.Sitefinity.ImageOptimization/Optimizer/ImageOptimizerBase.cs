@@ -63,7 +63,7 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
         /// <returns></returns>
         public virtual int GetItemsCount(Guid albumId)
         {
-            var optimizedImageIds = new HashSet<Guid>(OptimizationManager.GetImageOptimizationLogEntrys().Select(e => e.ImageId));
+            var optimizedImageIds = new HashSet<Guid>(OptimizationManager.GetImageOptimizationLogEntrys().Where(e => e.OptimizedFileId != Guid.Empty).Select(e => e.ImageId));
             var images = LibManager.GetAlbum(albumId).Images()
                 .Where(i => i.Status == ContentLifecycleStatus.Master && !optimizedImageIds.Contains(i.Id));
 
@@ -114,11 +114,11 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
                 // 2. Some other mechanism is being used to handle the item updates (callbacks)
                 if (optimizedImage != null)
                 {
-                    var oLogEntry = OptimizationManager.CreateImageOptimizationLogEntry();
+                    var oLogEntry = OptimizationManager.GetImageOptimizationLogEntrys().Where(e => e.ImageId == image.Id).FirstOrDefault();// .CreateImageOptimizationLogEntry();
 
-                    oLogEntry.ImageId = image.Id;
-                    oLogEntry.InitialFileExtension = image.Extension;
-                    oLogEntry.InitialTotalSize = image.TotalSize;
+                    //oLogEntry.ImageId = image.Id;
+                    //oLogEntry.InitialFileExtension = image.Extension;
+                    //oLogEntry.InitialTotalSize = image.TotalSize;
                     
                     // Check out the master to get a temp version.
                     Image temp = LibManager.Lifecycle.CheckOut(image) as Image;
@@ -162,7 +162,7 @@ namespace timw255.Sitefinity.ImageOptimization.Optimizer
         public virtual void OptimizeAlbum(Guid albumId)
         {
             // Get all the unoptimized image items
-            var optimizedImageIds = new HashSet<Guid>(OptimizationManager.GetImageOptimizationLogEntrys().Select(e => e.ImageId));
+            var optimizedImageIds = new HashSet<Guid>(OptimizationManager.GetImageOptimizationLogEntrys().Where(e => e.OptimizedFileId != Guid.Empty).Select(e => e.ImageId));
             var images = LibManager.GetAlbum(albumId).Images()
                 .Where(i => i.Status == ContentLifecycleStatus.Master && !optimizedImageIds.Contains(i.Id));
 

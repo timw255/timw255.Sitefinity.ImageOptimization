@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
@@ -21,9 +22,11 @@ using Telerik.Sitefinity.Fluent.Modules.Toolboxes;
 using Telerik.Sitefinity.GenericContent.Model;
 using Telerik.Sitefinity.Libraries.Model;
 using Telerik.Sitefinity.Lifecycle;
+using Telerik.Sitefinity.Metadata.Model;
 using Telerik.Sitefinity.Model;
 using Telerik.Sitefinity.Modules.Libraries;
 using Telerik.Sitefinity.Modules.Libraries.Configuration;
+using Telerik.Sitefinity.Modules.Libraries.ImageProcessing;
 using Telerik.Sitefinity.Modules.Pages.Configuration;
 using Telerik.Sitefinity.Security.Claims;
 using Telerik.Sitefinity.Services;
@@ -34,6 +37,7 @@ using Telerik.Sitefinity.Web.UI.Backend.Elements.Widgets;
 using Telerik.Sitefinity.Web.UI.ContentUI.Config;
 using Telerik.Sitefinity.Web.UI.ContentUI.Views.Backend.Master.Config;
 using timw255.Sitefinity.ImageOptimization.Configuration;
+using timw255.Sitefinity.ImageOptimization.ImageProcessing;
 
 namespace timw255.Sitefinity.ImageOptimization
 {
@@ -92,6 +96,8 @@ namespace timw255.Sitefinity.ImageOptimization
             );
 
             this.RegisterEventHandlers();
+
+            ObjectFactory.Container.RegisterType<IImageProcessor, FocalPointImageProcessor>(new ContainerControlledLifetimeManager());
         }
 
         private void RegisterEventHandlers()
@@ -107,6 +113,7 @@ namespace timw255.Sitefinity.ImageOptimization
         public override void Install(SiteInitializer initializer)
         {
             this.InstallVirtualPaths(initializer);
+            this.InstallFocalPointFields(initializer);
             this.InstallBackendScripts(initializer);
         }
 
@@ -160,6 +167,20 @@ namespace timw255.Sitefinity.ImageOptimization
             if (imagesScripts.TryGetValue(imageScriptLocation, out imageScriptElement))
             {
                 imagesScripts.Remove(imageScriptElement);
+
+                manager.SaveSection(librariesConfig);
+            }
+
+            string focalPointScriptLocation = "timw255.Sitefinity.ImageOptimization.Resources.FocalPoints.js, timw255.Sitefinity.ImageOptimization";
+
+            var imagesBackendEdit = librariesConfig.ContentViewControls["ImagesBackend"].ViewsConfig.Values.Where(v => v.ViewName == "ImagesBackendEdit").First();
+
+            var imagesEditScripts = imagesBackendEdit.Scripts;
+
+            ClientScriptElement focalPointScriptElement;
+            if (imagesScripts.TryGetValue(focalPointScriptLocation, out focalPointScriptElement))
+            {
+                imagesScripts.Remove(focalPointScriptElement);
 
                 manager.SaveSection(librariesConfig);
             }
@@ -344,8 +365,100 @@ namespace timw255.Sitefinity.ImageOptimization
 
                 manager.SaveSection(librariesConfig);
             }
-        }
 
+            string focalPointLoadMethodName = "focalPointInit";
+            string focalPointScriptLocation = "timw255.Sitefinity.ImageOptimization.Resources.FocalPoints.js, timw255.Sitefinity.ImageOptimization";
+
+            var imagesBackendEdit = librariesConfig.ContentViewControls["ImagesBackend"].ViewsConfig.Values.Where(v => v.ViewName == "ImagesBackendEdit").First();
+
+            var imagesEditScripts = imagesBackendEdit.Scripts;
+
+            ClientScriptElement focalPointScriptElement;
+            if (!imagesEditScripts.TryGetValue(focalPointScriptLocation, out focalPointScriptElement))
+            {
+                var newClientScript = new ClientScriptElement(imagesEditScripts);
+
+                newClientScript.ScriptLocation = focalPointScriptLocation;
+                newClientScript.LoadMethodName = focalPointLoadMethodName;
+
+                imagesEditScripts.Add(focalPointScriptLocation, newClientScript);
+
+                manager.SaveSection(librariesConfig);
+            }
+        }
+         
+        /// <summary>
+        /// Installs the focal point fields.
+        /// </summary>
+        private void InstallFocalPointFields(SiteInitializer initializer)
+        {
+            MetadataManager managerInTransaction = initializer.GetManagerInTransaction<MetadataManager>();
+            MetaType metaType = managerInTransaction.GetMetaType(typeof(Image));
+            if (metaType != null)
+            {
+                MetaField focalPointX = (
+                    from f in metaType.Fields
+                    where f.FieldName == "FocalPointX"
+                    select f).FirstOrDefault<MetaField>();
+
+                if (focalPointX == null)
+                {
+                    focalPointX = managerInTransaction.CreateMetafield("FocalPointX");
+                    focalPointX.Title = "FocalPointX";
+                    focalPointX.ClrType = typeof(int).FullName;
+                    focalPointX.ColumnName = "focal_point_x";
+                    focalPointX.Required = false;
+                    focalPointX.Hidden = true;
+                    focalPointX.SetMinValue(0);
+                    IList<MetaFieldAttribute> metaAttributes = focalPointX.MetaAttributes;
+                    MetaFieldAttribute metaFieldAttribute = new MetaFieldAttribute()
+                    {
+                        Name = "UserFriendlyDataType",
+                        Value = UserFriendlyDataType.Integer.ToString()
+                    };
+                    metaAttributes.Add(metaFieldAttribute);
+                    IList<MetaFieldAttribute> metaFieldAttributes = focalPointX.MetaAttributes;
+                    MetaFieldAttribute metaFieldAttribute1 = new MetaFieldAttribute()
+                    {
+                        Name = "IsCommonProperty",
+                        Value = "true"
+                    };
+                    metaFieldAttributes.Add(metaFieldAttribute1);
+                    metaType.Fields.Add(focalPointX);
+                }
+
+                MetaField focalPointY = (
+                    from f in metaType.Fields
+                    where f.FieldName == "FocalPointY"
+                    select f).FirstOrDefault<MetaField>();
+
+                if (focalPointY == null)
+                {
+                    focalPointY = managerInTransaction.CreateMetafield("FocalPointY");
+                    focalPointY.Title = "FocalPointY";
+                    focalPointY.ClrType = typeof(int).FullName;
+                    focalPointY.ColumnName = "focal_point_y";
+                    focalPointY.Required = false;
+                    focalPointY.Hidden = true;
+                    focalPointY.SetMinValue(0);
+                    IList<MetaFieldAttribute> metaAttributes = focalPointY.MetaAttributes;
+                    MetaFieldAttribute metaFieldAttribute = new MetaFieldAttribute()
+                    {
+                        Name = "UserFriendlyDataType",
+                        Value = UserFriendlyDataType.Integer.ToString()
+                    };
+                    metaAttributes.Add(metaFieldAttribute);
+                    IList<MetaFieldAttribute> metaFieldAttributes = focalPointY.MetaAttributes;
+                    MetaFieldAttribute metaFieldAttribute1 = new MetaFieldAttribute()
+                    {
+                        Name = "IsCommonProperty",
+                        Value = "true"
+                    };
+                    metaFieldAttributes.Add(metaFieldAttribute1);
+                    metaType.Fields.Add(focalPointY);
+                }
+            }
+        }
         #endregion
 
         #region Upgrade methods
