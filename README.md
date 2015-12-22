@@ -14,6 +14,10 @@ Extendable OptimizerBase class so developers can create custom image optimizers
 
 Optimization with either ImageMagick (default) or Kraken.io
 
+Focal Points
+
+Thumbnail generation based on focal points
+
 ###Changing the settings
 The default image optimizers can be configured by navigating to _(Administration -> Settings -> Advanced -> ImageOptimization -> Optimizers)_.
 
