@@ -43,18 +43,19 @@ namespace timw255.Sitefinity.ImageOptimization.ImageProcessing
         public override Image Crop(Image sourceImage, ImageProcessor.CropArguments args)
         {
             string fingerprint = ImageOptimizationHelper.GetImageFingerprint(sourceImage);
-
             var entry = OptimizationManager.GetImageOptimizationLogEntrys().Where(e => e.Fingerprint == fingerprint).FirstOrDefault();
+            int focalPointX = 0;
+            int focalPointY = 0;
 
             if (entry != null)
             {
                 var sfImage = LibManager.GetImage(entry.ImageId);
-                int focalPointX = sfImage.GetValue<int>("FocalPointX");
-                int focalPointY = sfImage.GetValue<int>("FocalPointY");
+                focalPointX = sfImage.GetValue<int>("FocalPointX");
+                focalPointY = sfImage.GetValue<int>("FocalPointY");
 
                 if (focalPointX != 0 && focalPointY != 0)
                 {
-                    return CropImageFromFocalPoint(sourceImage, focalPointX, focalPointY, args.Width, args.Height);
+                    return SmartCrop(sourceImage, focalPointX, focalPointY, args.Width, args.Height);
                 }
             }
 
@@ -64,54 +65,25 @@ namespace timw255.Sitefinity.ImageOptimization.ImageProcessing
         [ImageProcessingMethod(Title = "ResizeWithFitToAreaImageProcessorMethod", LabelFormat = "ResizeWithFitToAreaSizeFormat", ResourceClassId = "LibrariesResources", DescriptionText = "Generated image will be resized to desired area", DescriptionImageResourceName = "Telerik.Sitefinity.Modules.Libraries.ImageProcessing.Resources.FitToAreaResize.png", ValidateArgumentsMethodName = "ValidateFitToAreaArguments")]
         public override Image Resize(Image sourceImage, ImageProcessor.FitToAreaArguments args)
         {
-            string fingerprint = ImageOptimizationHelper.GetImageFingerprint(sourceImage);
-
-            var entry = OptimizationManager.GetImageOptimizationLogEntrys().Where(e => e.Fingerprint == fingerprint).FirstOrDefault();
-
-            if (entry != null)
-            {
-                var sfImage = LibManager.GetImage(entry.ImageId);
-                int focalPointX = sfImage.GetValue<int>("FocalPointX");
-                int focalPointY = sfImage.GetValue<int>("FocalPointY");
-
-                if (focalPointX != 0 && focalPointY != 0)
-                {
-                    return CropImageFromFocalPoint(sourceImage, focalPointX, focalPointY, args.MaxWidth, args.MaxHeight);
-                }
-            }
-
             return base.Resize(sourceImage, args);
         }
 
         [ImageProcessingMethod(Title = "ResizeWithFitToSideImageProcessorMethod", LabelFormat = "ResizeWithFitToSideSizeFormat", ResourceClassId = "LibrariesResources", ValidateArgumentsMethodName = "ValidateFitToSideArguments")]
         public override Image Resize(Image sourceImage, FitToSideArguments args)
         {
-            string fingerprint = ImageOptimizationHelper.GetImageFingerprint(sourceImage);
-
-            var entry = OptimizationManager.GetImageOptimizationLogEntrys().Where(e => e.Fingerprint == fingerprint).FirstOrDefault();
-
-            if (entry != null)
-            {
-                var sfImage = LibManager.GetImage(entry.ImageId);
-                int focalPointX = sfImage.GetValue<int>("FocalPointX");
-                int focalPointY = sfImage.GetValue<int>("FocalPointY");
-
-                if (focalPointX != 0 && focalPointY != 0)
-                {
-                    return CropImageFromFocalPoint(sourceImage, focalPointX, focalPointY, args.Size, args.Size);
-                }
-            }
-
             return base.Resize(sourceImage, args);
         }
 
-        public Bitmap CropImageFromFocalPoint(Image source, int focalPointX, int focalPointY, int width, int height)
+        public Bitmap SmartCrop(Image source, int focalPointX, int focalPointY, int width, int height)
         {
             // set the starting point for the crop so that the focal point is in the center of the resulting image
-            int x = focalPointX - (width / 2);
-            int y = focalPointY - (height / 2);
+            int x1 = focalPointX - (width / 2) > 0 ? focalPointX - (width / 2) : 0;
+            int y1 = focalPointY - (height / 2) > 0 ? focalPointY - (height / 2) : 0;
 
-            Rectangle crop = new Rectangle(x, y, width, height);
+            int x2 = width;
+            int y2 = height;
+
+            Rectangle crop = new Rectangle(x1, y1, x2, y2);
 
             var bmp = new Bitmap(crop.Width, crop.Height);
             using (var gr = Graphics.FromImage(bmp))

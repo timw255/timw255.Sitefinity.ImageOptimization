@@ -457,6 +457,68 @@ namespace timw255.Sitefinity.ImageOptimization
                     metaFieldAttributes.Add(metaFieldAttribute1);
                     metaType.Fields.Add(focalPointY);
                 }
+
+                MetaField focalPointWidth = (
+                    from f in metaType.Fields
+                    where f.FieldName == "FocalPointWidth"
+                    select f).FirstOrDefault<MetaField>();
+
+                if (focalPointWidth == null)
+                {
+                    focalPointWidth = managerInTransaction.CreateMetafield("FocalPointWidth");
+                    focalPointWidth.Title = "FocalPointWidth";
+                    focalPointWidth.ClrType = typeof(int).FullName;
+                    focalPointWidth.ColumnName = "focal_point_width";
+                    focalPointWidth.Required = false;
+                    focalPointWidth.Hidden = true;
+                    focalPointWidth.SetMinValue(0);
+                    IList<MetaFieldAttribute> metaAttributes = focalPointWidth.MetaAttributes;
+                    MetaFieldAttribute metaFieldAttribute = new MetaFieldAttribute()
+                    {
+                        Name = "UserFriendlyDataType",
+                        Value = UserFriendlyDataType.Integer.ToString()
+                    };
+                    metaAttributes.Add(metaFieldAttribute);
+                    IList<MetaFieldAttribute> metaFieldAttributes = focalPointWidth.MetaAttributes;
+                    MetaFieldAttribute metaFieldAttribute1 = new MetaFieldAttribute()
+                    {
+                        Name = "IsCommonProperty",
+                        Value = "true"
+                    };
+                    metaFieldAttributes.Add(metaFieldAttribute1);
+                    metaType.Fields.Add(focalPointWidth);
+                }
+
+                MetaField focalPointHeight = (
+                    from f in metaType.Fields
+                    where f.FieldName == "FocalPointHeight"
+                    select f).FirstOrDefault<MetaField>();
+
+                if (focalPointHeight == null)
+                {
+                    focalPointHeight = managerInTransaction.CreateMetafield("FocalPointHeight");
+                    focalPointHeight.Title = "FocalPointHeight";
+                    focalPointHeight.ClrType = typeof(int).FullName;
+                    focalPointHeight.ColumnName = "focal_point_height";
+                    focalPointHeight.Required = false;
+                    focalPointHeight.Hidden = true;
+                    focalPointHeight.SetMinValue(0);
+                    IList<MetaFieldAttribute> metaAttributes = focalPointHeight.MetaAttributes;
+                    MetaFieldAttribute metaFieldAttribute = new MetaFieldAttribute()
+                    {
+                        Name = "UserFriendlyDataType",
+                        Value = UserFriendlyDataType.Integer.ToString()
+                    };
+                    metaAttributes.Add(metaFieldAttribute);
+                    IList<MetaFieldAttribute> metaFieldAttributes = focalPointHeight.MetaAttributes;
+                    MetaFieldAttribute metaFieldAttribute1 = new MetaFieldAttribute()
+                    {
+                        Name = "IsCommonProperty",
+                        Value = "true"
+                    };
+                    metaFieldAttributes.Add(metaFieldAttribute1);
+                    metaType.Fields.Add(focalPointHeight);
+                }
             }
         }
         #endregion

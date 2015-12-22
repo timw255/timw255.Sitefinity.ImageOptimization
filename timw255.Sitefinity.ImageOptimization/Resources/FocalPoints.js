@@ -22,17 +22,20 @@ timw255.Sitefinity.ImageOptimization.FocalPointsExtension = function () {
     
     this._previewImage = null;
 
+    this._focalCanvas = null;
+    this.ctx = null;
+    this._rect = {};
+    this._drag = false;
+
     this._item = null;
     this._ratioX = null;
     this._ratioY = null;
 
-    this._focalPointX = null;
-    this._focalPointY = null;
-
     this._dataBoundDelegate = null;
-    this._previewImageClickedDelegate = null;
-    this._focalPointClickedDelegate = null;
-    this._showFocalPointMarkerDelegate = null;
+
+    this._focalCanvasMouseDownDelegate = null;
+    this._focalCanvasMouseUpDelegate = null;
+    this._focalCanvasMouseMoveDelegate = null;
 }
 
 timw255.Sitefinity.ImageOptimization.FocalPointsExtension.prototype = {
@@ -48,16 +51,21 @@ timw255.Sitefinity.ImageOptimization.FocalPointsExtension.prototype = {
 
         this._previewImage = $('.sfPreviewVideoFrame img')[0];
 
-        this._previewImageClickedDelegate = Function.createDelegate(this, this._previewImageClicked);
-        $addHandler(this._previewImage, "click", this._previewImageClickedDelegate);
-
         $(this._previewImage).wrap("<div id='focalPointContainer' style='display:inline-block;position:relative;'></div>");
-        $('<div id="focalPoint" style="width:10px;height:10px;border-radius:10px;background:#fff;border: 2px solid #000;position:absolute;top:0;left:0;display:none;"></div>').appendTo('#focalPointContainer');
+        $('<canvas id="focalCanvas" width="555" height="251" style="width:100%;height:100%;position:absolute;top:0px;left:0px;z-index:20;"></canvas>').appendTo('#focalPointContainer');
 
-        this._focalPoint = $('#focalPoint')[0];
+        this._focalCanvas = $('#focalCanvas')[0];
 
-        this._focalPointClickedDelegate = Function.createDelegate(this, this._focalPointClicked);
-        $addHandler(this._focalPoint, "click", this._focalPointClickedDelegate);
+        this._ctx = this._focalCanvas.getContext('2d');
+
+        this._focalCanvasMouseDownDelegate = Function.createDelegate(this, this._focalCanvasMouseDown);
+        $addHandler(this._focalCanvas, "mousedown", this._focalCanvasMouseDownDelegate);
+
+        this._focalCanvasMouseUpDelegate = Function.createDelegate(this, this._focalCanvasMouseUp);
+        $addHandler(this._focalCanvas, "mouseup", this._focalCanvasMouseUpDelegate);
+
+        this._focalCanvasMouseMoveDelegate = Function.createDelegate(this, this._focalCanvasMouseMove);
+        $addHandler(this._focalCanvas, "mousemove", this._focalCanvasMouseMoveDelegate);
 
         $("<span class='sfExample'></span>").appendTo('.sfPreviewVideoFrame');
     },
@@ -77,49 +85,71 @@ timw255.Sitefinity.ImageOptimization.FocalPointsExtension.prototype = {
         this._ratio = this._item.Width / this._previewImage.width;
 
         if (this._item.FocalPointX !== null && this._item.FocalPointX != 0 && this._item.FocalPointY !== null && this._item.FocalPointY != 0) {
-            scaled_focalPointX = this._item.FocalPointX / this._ratio;
-            scaled_focalPointY = this._item.FocalPointY / this._ratio;
+            this._rect.startX = this._item.FocalPointX / this._ratio;
+            this._rect.startY = this._item.FocalPointY / this._ratio;
 
-            this._showFocalPointMarker(scaled_focalPointX, scaled_focalPointY);
+            this._rect.w = this._item.FocalPointWidth / this._ratio;
+            this._rect.h = this._item.FocalPointHeight / this._ratio;
+
+            this._ctx.clearRect(0, 0, this._focalCanvas.width, this._focalCanvas.height);
+            this._drawFocalMarker();
         } else {
-            this._hideFocalPointMarker();
+            
+            this._ctx.clearRect(0, 0, this._focalCanvas.width, this._focalCanvas.height);
         }
     },
 
-    _previewImageClicked: function (sender, args) {
-        var scaled_focalPointX = sender.offsetX;
-        var scaled_focalPointY = sender.offsetY;
-
-        this._focalPointX = Math.ceil(scaled_focalPointX * this._ratio);
-        this._focalPointY = Math.ceil(scaled_focalPointY * this._ratio);
-
-        this._item.FocalPointX = this._focalPointX;
-        this._item.FocalPointY = this._focalPointY;
-
-        this._showFocalPointMarker(scaled_focalPointX, scaled_focalPointY);
+    _focalCanvasMouseDown: function (sender, args) {
+        this._rect.startX = sender.offsetX;
+        this._rect.startY = sender.offsetY;
+        this._drag = true;
+        event.preventDefault();
     },
 
-    _focalPointClicked: function (sender, args) {
-        this._item.FocalPointX = 0;
-        this._item.FocalPointY = 0;
+    _focalCanvasMouseUp: function (sender, args) {
+        this._drag = false;
 
-        this._hideFocalPointMarker();
+        if (this._rect.w < 25 || this._rect.h < 25) {
+            this._ctx.clearRect(0, 0, this._focalCanvas.width, this._focalCanvas.height);
+
+            this._item.FocalPointX = 0;
+            this._item.FocalPointY = 0;
+
+            this._item.FocalPointWidth = 0;
+            this._item.FocalPointHeight = 0;
+
+            $('.sfPreviewVideoFrame .sfExample').text('Click and drag on the image above to set a focal point');
+
+            return;
+        }
+
+        this._item.FocalPointX = Math.ceil(this._rect.startX * this._ratio);
+        this._item.FocalPointY = Math.ceil(this._rect.startY * this._ratio);
+
+        this._item.FocalPointWidth = Math.ceil(this._rect.w * this._ratio);
+        this._item.FocalPointHeight = Math.ceil(this._rect.h * this._ratio);
+    },
+
+    _focalCanvasMouseMove: function (sender, args) {
+        if (this._drag) {
+            this._rect.w = sender.offsetX - this._rect.startX;
+            this._rect.h = sender.offsetY - this._rect.startY;
+            this._ctx.clearRect(0, 0, this._focalCanvas.width, this._focalCanvas.height);
+            this._drawFocalMarker();
+        }
     },
     /* -------------------- private methods ----------- */
-    _showFocalPointMarker: function (scaled_focalPointX, scaled_focalPointY) {
-        $('#focalPoint').css('left', scaled_focalPointX - 7);
-        $('#focalPoint').css('top', scaled_focalPointY - 7);
-        $('#focalPoint').show();
-
+    _drawFocalMarker: function () {
         $('.sfPreviewVideoFrame .sfExample').text('Click the focal point to remove it');
+        this._ctx.beginPath();
+        this._ctx.globalAlpha = 0.2;
+        this._ctx.rect(this._rect.startX, this._rect.startY, this._rect.w, this._rect.h);
+        this._ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+        this._ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        this._ctx.lineWidth = 2;
+        this._ctx.fill();
+        this._ctx.stroke();
     },
-
-    _hideFocalPointMarker: function () {
-        $('#focalPoint').hide();
-
-        $('.sfPreviewVideoFrame .sfExample').text('Click the image above to set a focal point');
-    }
-
     /* -------------------- properties ---------------- */
 }
 timw255.Sitefinity.ImageOptimization.FocalPointsExtension.registerClass("timw255.Sitefinity.ImageOptimization.FocalPointsExtension", Sys.Component, Sys.IDisposable);
