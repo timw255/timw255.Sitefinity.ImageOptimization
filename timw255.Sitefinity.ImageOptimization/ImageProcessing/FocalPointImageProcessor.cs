@@ -86,7 +86,9 @@ namespace timw255.Sitefinity.ImageOptimization.ImageProcessing
             float s = 1;
             Image scaledSource = source;
             bool scaleDown = (focalPointWidth > args.Width) || (focalPointHeight > args.Height);
-            bool shouldScale = scaleDown || args.ScaleUp;
+            bool scaleUp = ((focalPointWidth < args.Width) || (focalPointHeight < args.Height)) && args.ScaleUp;
+            bool shouldScale = scaleDown || scaleUp;
+
             if (shouldScale)
             {
                 if (((float)focalPointWidth / (float)args.Width > (float)focalPointHeight / (float)args.Height))
