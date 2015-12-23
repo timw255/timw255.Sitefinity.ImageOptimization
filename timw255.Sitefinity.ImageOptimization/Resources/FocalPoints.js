@@ -94,7 +94,6 @@ timw255.Sitefinity.ImageOptimization.FocalPointsExtension.prototype = {
             this._ctx.clearRect(0, 0, this._focalCanvas.width, this._focalCanvas.height);
             this._drawFocalMarker();
         } else {
-            
             this._ctx.clearRect(0, 0, this._focalCanvas.width, this._focalCanvas.height);
         }
     },

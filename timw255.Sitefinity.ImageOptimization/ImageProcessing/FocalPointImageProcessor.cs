@@ -46,16 +46,20 @@ namespace timw255.Sitefinity.ImageOptimization.ImageProcessing
             var entry = OptimizationManager.GetImageOptimizationLogEntrys().Where(e => e.Fingerprint == fingerprint).FirstOrDefault();
             int focalPointX = 0;
             int focalPointY = 0;
+            int focalPointWidth = 0;
+            int focalPointHeight = 0;
 
             if (entry != null)
             {
                 var sfImage = LibManager.GetImage(entry.ImageId);
                 focalPointX = sfImage.GetValue<int>("FocalPointX");
                 focalPointY = sfImage.GetValue<int>("FocalPointY");
+                focalPointWidth = sfImage.GetValue<int>("FocalPointWidth");
+                focalPointHeight = sfImage.GetValue<int>("FocalPointHeight");
 
                 if (focalPointX != 0 && focalPointY != 0)
                 {
-                    return SmartCrop(sourceImage, focalPointX, focalPointY, args.Width, args.Height);
+                    return SmartCrop(sourceImage, focalPointX, focalPointY, focalPointWidth, focalPointHeight, args.Width, args.Height);
                 }
             }
 
@@ -74,21 +78,77 @@ namespace timw255.Sitefinity.ImageOptimization.ImageProcessing
             return base.Resize(sourceImage, args);
         }
 
-        public Bitmap SmartCrop(Image source, int focalPointX, int focalPointY, int width, int height)
+        public Image SmartCrop(Image source, int focalPointX, int focalPointY, int focalPointWidth, int focalPointHeight, int thumbnailWidth, int thumbnailHeight)
         {
-            // set the starting point for the crop so that the focal point is in the center of the resulting image
-            int x1 = focalPointX - (width / 2) > 0 ? focalPointX - (width / 2) : 0;
-            int y1 = focalPointY - (height / 2) > 0 ? focalPointY - (height / 2) : 0;
+            int cropX = focalPointX;
+            int cropY = focalPointY;
+            int cropWidth = focalPointWidth;
+            int cropHeight = focalPointHeight;
 
-            int x2 = width;
-            int y2 = height;
+            float s;
 
-            Rectangle crop = new Rectangle(x1, y1, x2, y2);
+            if (thumbnailWidth > thumbnailHeight)
+            {
+                s = thumbnailWidth / thumbnailHeight;
+                cropWidth = (int)Math.Round(focalPointWidth * s, 0);
+                cropX = focalPointX - ((cropWidth - focalPointWidth) / 2);
+            }
+
+            if (thumbnailWidth < thumbnailHeight)
+            {
+                s = thumbnailHeight / thumbnailWidth;
+                cropHeight = (int)Math.Round(focalPointHeight * s, 0);
+                cropY = focalPointY - ((cropHeight - focalPointHeight) / 2);
+            }
+
+            if (thumbnailWidth == thumbnailHeight)
+            {
+                int longestSide = Math.Max(focalPointWidth, focalPointHeight);
+                cropWidth = longestSide;
+                cropHeight = longestSide;
+
+                if (focalPointWidth > focalPointHeight)
+                {
+                    cropY = focalPointY - ((cropHeight - focalPointHeight) / 2);
+                }
+
+                if (focalPointWidth < focalPointHeight)
+                {
+                    cropX = focalPointX - ((cropWidth - focalPointWidth) / 2);
+                }
+            }
+
+            if (cropX < 0) { cropX = 0; }
+            if (cropY < 0) { cropY = 0; }
+
+            if (cropX + cropWidth > source.Width)
+            {
+                cropX = cropX - (source.Width - cropWidth);
+            }
+
+            if (cropY + cropHeight > source.Height)
+            {
+                cropY = cropY - (source.Height - cropHeight);
+            }
+
+            if (cropX < 0 || cropY < 0)
+            {
+                // source needs resized up to work :(
+            }
+
+            Rectangle crop = new Rectangle(cropX, cropY, cropWidth, cropHeight);
 
             var bmp = new Bitmap(crop.Width, crop.Height);
+
             using (var gr = Graphics.FromImage(bmp))
             {
                 gr.DrawImage(source, new Rectangle(0, 0, bmp.Width, bmp.Height), crop, GraphicsUnit.Pixel);
+            }
+
+            Image thumbnail;
+            if (ImagesHelper.TryResizeImage(bmp, thumbnailWidth, thumbnailHeight, out thumbnail, ImageQuality.Medium))
+            {
+                return thumbnail;
             }
             return bmp;
         } 
