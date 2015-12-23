@@ -36,6 +36,7 @@ timw255.Sitefinity.ImageOptimization.FocalPointsExtension = function () {
     this._focalCanvasMouseDownDelegate = null;
     this._focalCanvasMouseUpDelegate = null;
     this._focalCanvasMouseMoveDelegate = null;
+    this._previewImageLoadedDelegate = null;
 }
 
 timw255.Sitefinity.ImageOptimization.FocalPointsExtension.prototype = {
@@ -51,8 +52,11 @@ timw255.Sitefinity.ImageOptimization.FocalPointsExtension.prototype = {
 
         this._previewImage = $('.sfPreviewVideoFrame img')[0];
 
+        this._previewImageLoadedDelegate = Function.createDelegate(this, this._previewImageLoaded);
+        $addHandler(this._previewImage, "load", this._previewImageLoadedDelegate);
+
         $(this._previewImage).wrap("<div id='focalPointContainer' style='display:inline-block;position:relative;'></div>");
-        $('<canvas id="focalCanvas" width="555" height="251" style="width:100%;height:100%;position:absolute;top:0px;left:0px;z-index:20;"></canvas>').appendTo('#focalPointContainer');
+        $('<canvas id="focalCanvas" style="width:100%;height:100%;position:absolute;top:0px;left:0px;z-index:20;"></canvas>').appendTo('#focalPointContainer');
 
         this._focalCanvas = $('#focalCanvas')[0];
 
@@ -72,6 +76,31 @@ timw255.Sitefinity.ImageOptimization.FocalPointsExtension.prototype = {
 
     dispose: function () {
         timw255.Sitefinity.ImageOptimization.FocalPointsExtension.callBaseMethod(this, "dispose");
+
+        if (this._dataBoundDelegate) {
+            delete this._dataBoundDelegate;
+        }
+        if (this._focalCanvasMouseDownDelegate) {
+            delete this._focalCanvasMouseDownDelegate;
+        }
+        if (this._focalCanvasMouseUpDelegate) {
+            delete this._focalCanvasMouseUpDelegate;
+        }
+        if (this._focalCanvasMouseMoveDelegate) {
+            delete this._focalCanvasMouseMoveDelegate;
+        }
+        if (this._previewImageLoadedDelegate) {
+            delete this._previewImageLoadedDelegate;
+        }
+
+        if (this._previewImage) {
+            $removeHandler(this._previewImage, "load", this._previewImageLoadedDelegate);
+        }
+        if (this._focalCanvas) {
+            $removeHandler(this._focalCanvas, "mousedown", this._focalCanvasMouseDownDelegate);
+            $removeHandler(this._focalCanvas, "mouseup", this._focalCanvasMouseUpDelegate);
+            $removeHandler(this._focalCanvas, "mousemove", this._focalCanvasMouseMoveDelegate);
+        }
     },
 
     /* --------------------  public methods ----------- */
@@ -83,6 +112,11 @@ timw255.Sitefinity.ImageOptimization.FocalPointsExtension.prototype = {
         this._item = args.Item;
 
         this._ratio = this._item.Width / this._previewImage.width;
+    },
+
+    _previewImageLoaded: function (sender, args) {
+        this._focalCanvas.width = this._previewImage.width;
+        this._focalCanvas.height = this._previewImage.height;
 
         if (this._item.FocalPointX !== null && this._item.FocalPointX != 0 && this._item.FocalPointY !== null && this._item.FocalPointY != 0) {
             this._rect.startX = this._item.FocalPointX / this._ratio;
@@ -108,7 +142,7 @@ timw255.Sitefinity.ImageOptimization.FocalPointsExtension.prototype = {
     _focalCanvasMouseUp: function (sender, args) {
         this._drag = false;
 
-        if (this._rect.w < 25 || this._rect.h < 25) {
+        if (Math.abs(this._rect.w) < 25 || Math.abs(this._rect.h) < 25) {
             this._ctx.clearRect(0, 0, this._focalCanvas.width, this._focalCanvas.height);
 
             this._item.FocalPointX = 0;
@@ -122,11 +156,16 @@ timw255.Sitefinity.ImageOptimization.FocalPointsExtension.prototype = {
             return;
         }
 
-        this._item.FocalPointX = Math.ceil(this._rect.startX * this._ratio);
-        this._item.FocalPointY = Math.ceil(this._rect.startY * this._ratio);
+        if (this._rect.w < 0 || this._rect.h < 0) {
+            this._item.FocalPointX = Math.ceil((this._rect.startX + this._rect.w) * this._ratio);
+            this._item.FocalPointY = Math.ceil((this._rect.startY + this._rect.h) * this._ratio);
+        } else {
+            this._item.FocalPointX = Math.ceil(this._rect.startX * this._ratio);
+            this._item.FocalPointY = Math.ceil(this._rect.startY * this._ratio);
+        }
 
-        this._item.FocalPointWidth = Math.ceil(this._rect.w * this._ratio);
-        this._item.FocalPointHeight = Math.ceil(this._rect.h * this._ratio);
+        this._item.FocalPointWidth = Math.abs(Math.ceil(this._rect.w * this._ratio));
+        this._item.FocalPointHeight = Math.abs(Math.ceil(this._rect.h * this._ratio));
     },
 
     _focalCanvasMouseMove: function (sender, args) {

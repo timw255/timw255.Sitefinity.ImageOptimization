@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Telerik.Sitefinity.Modules.Libraries;
 using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace timw255.Sitefinity.ImageOptimization
 {
@@ -37,7 +38,7 @@ namespace timw255.Sitefinity.ImageOptimization
             string hash;
             using (MemoryStream ms = new MemoryStream())
             {
-                sourceImage.Save(ms, sourceImage.RawFormat);
+                sourceImage.Save(ms, ImageFormat.Bmp);
 
                 byte[] data = ReadFully(ms);
 
