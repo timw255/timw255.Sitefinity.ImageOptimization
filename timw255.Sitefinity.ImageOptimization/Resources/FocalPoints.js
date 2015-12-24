@@ -33,6 +33,7 @@ timw255.Sitefinity.ImageOptimization.FocalPointsExtension = function () {
 
     this._dataBoundDelegate = null;
 
+    this._focalCanvasMouseLeaveDelegate = null;
     this._focalCanvasMouseDownDelegate = null;
     this._focalCanvasMouseUpDelegate = null;
     this._focalCanvasMouseMoveDelegate = null;
@@ -71,6 +72,9 @@ timw255.Sitefinity.ImageOptimization.FocalPointsExtension.prototype = {
         this._focalCanvasMouseMoveDelegate = Function.createDelegate(this, this._focalCanvasMouseMove);
         $addHandler(this._focalCanvas, "mousemove", this._focalCanvasMouseMoveDelegate);
 
+        this._focalCanvasMouseLeaveDelegate = Function.createDelegate(this, this._focalCanvasMouseLeave);
+        $addHandler(this._focalCanvas, "mouseleave", this._focalCanvasMouseLeaveDelegate);
+
         $("<span class='sfExample'></span>").appendTo('.sfPreviewVideoFrame');
     },
 
@@ -79,6 +83,9 @@ timw255.Sitefinity.ImageOptimization.FocalPointsExtension.prototype = {
 
         if (this._dataBoundDelegate) {
             delete this._dataBoundDelegate;
+        }
+        if (this._focalCanvasMouseLeaveDelegate) {
+            delete this._focalCanvasMouseLeaveDelegate;
         }
         if (this._focalCanvasMouseDownDelegate) {
             delete this._focalCanvasMouseDownDelegate;
@@ -100,6 +107,7 @@ timw255.Sitefinity.ImageOptimization.FocalPointsExtension.prototype = {
             $removeHandler(this._focalCanvas, "mousedown", this._focalCanvasMouseDownDelegate);
             $removeHandler(this._focalCanvas, "mouseup", this._focalCanvasMouseUpDelegate);
             $removeHandler(this._focalCanvas, "mousemove", this._focalCanvasMouseMoveDelegate);
+            $removeHandler(this._focalCanvas, "mouseleave", this._focalCanvasMouseLeaveDelegate);
         }
     },
 
@@ -118,6 +126,8 @@ timw255.Sitefinity.ImageOptimization.FocalPointsExtension.prototype = {
         this._focalCanvas.width = this._previewImage.width;
         this._focalCanvas.height = this._previewImage.height;
 
+        this._ctx.clearRect(0, 0, this._focalCanvas.width, this._focalCanvas.height);
+
         if (this._item.FocalPointX !== null && this._item.FocalPointX != 0 && this._item.FocalPointY !== null && this._item.FocalPointY != 0) {
             this._rect.startX = this._item.FocalPointX / this._ratio;
             this._rect.startY = this._item.FocalPointY / this._ratio;
@@ -125,10 +135,7 @@ timw255.Sitefinity.ImageOptimization.FocalPointsExtension.prototype = {
             this._rect.w = this._item.FocalPointWidth / this._ratio;
             this._rect.h = this._item.FocalPointHeight / this._ratio;
 
-            this._ctx.clearRect(0, 0, this._focalCanvas.width, this._focalCanvas.height);
             this._drawFocalMarker();
-        } else {
-            this._ctx.clearRect(0, 0, this._focalCanvas.width, this._focalCanvas.height);
         }
     },
 
@@ -139,7 +146,24 @@ timw255.Sitefinity.ImageOptimization.FocalPointsExtension.prototype = {
         event.preventDefault();
     },
 
+    _focalCanvasMouseLeave: function (sender, args) {
+        this._endSelection();
+    },
+
     _focalCanvasMouseUp: function (sender, args) {
+        this._endSelection();
+    },
+
+    _focalCanvasMouseMove: function (sender, args) {
+        if (this._drag) {
+            this._rect.w = sender.offsetX - this._rect.startX;
+            this._rect.h = sender.offsetY - this._rect.startY;
+            
+            this._drawFocalMarker();
+        }
+    },
+    /* -------------------- private methods ----------- */
+    _endSelection: function () {
         this._drag = false;
 
         if (Math.abs(this._rect.w) < 25 || Math.abs(this._rect.h) < 25) {
@@ -166,21 +190,14 @@ timw255.Sitefinity.ImageOptimization.FocalPointsExtension.prototype = {
 
         this._item.FocalPointWidth = Math.abs(Math.ceil(this._rect.w * this._ratio));
         this._item.FocalPointHeight = Math.abs(Math.ceil(this._rect.h * this._ratio));
+
+        $('.sfPreviewVideoFrame .sfExample').text('Click the focal point to remove it');
     },
 
-    _focalCanvasMouseMove: function (sender, args) {
-        if (this._drag) {
-            this._rect.w = sender.offsetX - this._rect.startX;
-            this._rect.h = sender.offsetY - this._rect.startY;
-            this._ctx.clearRect(0, 0, this._focalCanvas.width, this._focalCanvas.height);
-            this._drawFocalMarker();
-        }
-    },
-    /* -------------------- private methods ----------- */
     _drawFocalMarker: function () {
-        $('.sfPreviewVideoFrame .sfExample').text('Click the focal point to remove it');
+        this._ctx.clearRect(0, 0, this._focalCanvas.width, this._focalCanvas.height);
         this._ctx.beginPath();
-        this._ctx.globalAlpha = 0.2;
+        this._ctx.globalAlpha = 0.5;
         this._ctx.rect(this._rect.startX, this._rect.startY, this._rect.w, this._rect.h);
         this._ctx.strokeStyle = 'rgba(0,0,0,0.9)';
         this._ctx.fillStyle = 'rgba(255,255,255,0.6)';

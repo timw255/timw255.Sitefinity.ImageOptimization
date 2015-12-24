@@ -51,7 +51,7 @@ namespace timw255.Sitefinity.ImageOptimization
             return hash;
         }
 
-        private static byte[] ReadFully(Stream input)
+        public static byte[] ReadFully(Stream input)
         {
             byte[] buffer = new byte[16 * 1024];
             using (MemoryStream ms = new MemoryStream())
