@@ -8,6 +8,7 @@ using Telerik.Sitefinity.Modules.Libraries;
 using Telerik.Sitefinity.Modules.Libraries.ImageProcessing;
 using Telerik.Sitefinity.Modules.Libraries.Images;
 using Telerik.Sitefinity.Model;
+using Telerik.Sitefinity.Localization;
 
 namespace timw255.Sitefinity.ImageOptimization.ImageProcessing
 {
@@ -39,8 +40,8 @@ namespace timw255.Sitefinity.ImageOptimization.ImageProcessing
             }
         }
 
-        [ImageProcessingMethod(Title = "CropToAreaImageProcessorMethod", LabelFormat = "CropToAreaSizeFormat", ResourceClassId = "LibrariesResources", DescriptionText = "Generated image will be resized and cropped to desired area", DescriptionImageResourceName = "Telerik.Sitefinity.Modules.Libraries.ImageProcessing.Resources.CropToAreaResize.png", ValidateArgumentsMethodName = "ValidateCropToAreaArguments")]
-        public override Image Crop(Image sourceImage, ImageProcessor.CropArguments args)
+        [ImageProcessingMethod(Title = "SmartScaleCropImageProcessorMethod", LabelFormat = "SmartScaleCropSizeFormat", ResourceClassId = "ImageOptimizationResources", DescriptionText = "Generated image will be scaled and/or cropped to desired size based on focal area", DescriptionImageResourceName = "timw255.Sitefinity.ImageOptimization.Resources.SmartScaleCrop.png", ValidateArgumentsMethodName = "ValidateSmartScaleCropArguments")]
+        public Image SmartScaleCrop(Image sourceImage, SmartScaleCropArguments args)
         {
             string fingerprint = ImageOptimizationHelper.GetImageFingerprint(sourceImage);
             var entry = OptimizationManager.GetImageOptimizationLogEntrys().Where(e => e.Fingerprint == fingerprint).FirstOrDefault();
@@ -48,6 +49,7 @@ namespace timw255.Sitefinity.ImageOptimization.ImageProcessing
             int focalPointY = 0;
             int focalPointWidth = 0;
             int focalPointHeight = 0;
+            int focalPointAnchor = 0;
 
             if (entry != null)
             {
@@ -56,40 +58,32 @@ namespace timw255.Sitefinity.ImageOptimization.ImageProcessing
                 focalPointY = sfImage.GetValue<int>("FocalPointY");
                 focalPointWidth = sfImage.GetValue<int>("FocalPointWidth");
                 focalPointHeight = sfImage.GetValue<int>("FocalPointHeight");
+                focalPointAnchor = sfImage.GetValue<int>("FocalPointAnchor");
 
                 if (focalPointX != 0 && focalPointY != 0)
                 {
-                    return SmartCrop(sourceImage, focalPointX, focalPointY, focalPointWidth, focalPointHeight, args);
+                    return Process(sourceImage, focalPointX, focalPointY, focalPointWidth, focalPointHeight, focalPointAnchor, args);
                 }
             }
 
             return base.Crop(sourceImage, args);
         }
 
-        [ImageProcessingMethod(Title = "ResizeWithFitToAreaImageProcessorMethod", LabelFormat = "ResizeWithFitToAreaSizeFormat", ResourceClassId = "LibrariesResources", DescriptionText = "Generated image will be resized to desired area", DescriptionImageResourceName = "Telerik.Sitefinity.Modules.Libraries.ImageProcessing.Resources.FitToAreaResize.png", ValidateArgumentsMethodName = "ValidateFitToAreaArguments")]
-        public override Image Resize(Image sourceImage, ImageProcessor.FitToAreaArguments args)
-        {
-            return base.Resize(sourceImage, args);
-        }
-
-        [ImageProcessingMethod(Title = "ResizeWithFitToSideImageProcessorMethod", LabelFormat = "ResizeWithFitToSideSizeFormat", ResourceClassId = "LibrariesResources", ValidateArgumentsMethodName = "ValidateFitToSideArguments")]
-        public override Image Resize(Image sourceImage, FitToSideArguments args)
-        {
-            return base.Resize(sourceImage, args);
-        }
-
-        public Image SmartCrop(Image source, int focalPointX, int focalPointY, int focalPointWidth, int focalPointHeight, ImageProcessor.CropArguments args)
+        public Image Process(Image source, int focalPointX, int focalPointY, int focalPointWidth, int focalPointHeight, int focalPointAnchor, SmartScaleCropArguments args)
         {
             int cropX = focalPointX;
             int cropY = focalPointY;
 
+            int drawX = 0;
+            int drawY = 0;
+
             float s = 1;
-            Image scaledSource = source;
             bool scaleDown = (focalPointWidth > args.Width) || (focalPointHeight > args.Height);
             bool scaleUp = ((focalPointWidth < args.Width) || (focalPointHeight < args.Height)) && args.ScaleUp;
             bool shouldScale = scaleDown || scaleUp;
 
-            if (shouldScale)
+            Image scaledSource = source;
+            if (args.PreserveFocalArea && shouldScale)
             {
                 if (((float)focalPointWidth / (float)args.Width > (float)focalPointHeight / (float)args.Height))
                 {
@@ -107,6 +101,11 @@ namespace timw255.Sitefinity.ImageOptimization.ImageProcessing
             if (args.Width > scaledSource.Width)
             {
                 cropX = (scaledSource.Width - args.Width) / 2;
+
+                if (!args.PreserveFocalArea)
+                {
+                    drawX = 0;
+                }
             }
             
             cropY = Math.Min(Math.Max((int)Math.Round(focalPointY * s + focalPointHeight * s / 2 - args.Height / 2, 0), 0), scaledSource.Height - args.Height);
@@ -114,6 +113,11 @@ namespace timw255.Sitefinity.ImageOptimization.ImageProcessing
             if (args.Height > scaledSource.Height)
             {
                 cropY = (scaledSource.Height - args.Height) / 2;
+
+                if (!args.PreserveFocalArea)
+                {
+                    drawY = 0;
+                }
             }
 
             Rectangle crop = new Rectangle(cropX, cropY, args.Width, args.Height);
@@ -122,10 +126,36 @@ namespace timw255.Sitefinity.ImageOptimization.ImageProcessing
 
             using (var gr = Graphics.FromImage(bmp))
             {
-                gr.DrawImage(scaledSource, new Rectangle(0, 0, bmp.Width, bmp.Height), crop, GraphicsUnit.Pixel);
+                gr.DrawImage(scaledSource, new Rectangle(drawX, drawY, bmp.Width, bmp.Height), crop, GraphicsUnit.Pixel);
             }
 
             return bmp;
-        } 
+        }
+
+        protected virtual void ValidateSmartScaleCropArguments(object argument)
+        {
+            SmartScaleCropArguments cropArgument = argument as SmartScaleCropArguments;
+            if (cropArgument == null)
+            {
+                object[] fullName = new object[] { typeof(SmartScaleCropArguments).FullName };
+                throw new InvalidOperationException("Argument of type '{0}' is expected".Arrange(fullName));
+            }
+            base.ValidateCropToAreaArguments(argument);
+        }
+
+        public class SmartScaleCropArguments : CropArguments
+        {
+            [ImageProcessingProperty(Title = "PreserveFocalArea", ResourceClassId = "ImageOptimizationResources")]
+            public bool PreserveFocalArea
+            {
+                get;
+                set;
+            }
+
+            public SmartScaleCropArguments()
+            {
+                this.PreserveFocalArea = false;
+            }
+        }
     }
 }

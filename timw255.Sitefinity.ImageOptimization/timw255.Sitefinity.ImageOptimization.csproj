@@ -707,6 +707,7 @@
     <Compile Include="Configuration\ImageOptimizationConfig.cs" />
     <Compile Include="Configuration\ImageOptimizerSettings.cs" />
     <Compile Include="ImageOptimizationEventHandlers.cs" />
+    <Compile Include="ImageOptimizationExtensions.cs" />
     <Compile Include="ImageOptimizationHelper.cs" />
     <Compile Include="ImageOptimizationManager.cs" />
     <Compile Include="ImageOptimizationDataProvider.cs" />
@@ -1139,6 +1140,7 @@
     <Content Include="ResourcePackages\SemanticUI\gruntfile.js" />
     <Content Include="ResourcePackages\SemanticUI\MVC\Scripts\Navigation\Navigation-semantic.js" />
     <Content Include="ResourcePackages\SemanticUI\MVC\Scripts\SearchBox\Search-box.js" />
+    <EmbeddedResource Include="Resources\SmartScaleCrop.png" />
     <EmbeddedResource Include="Resources\FocalPoints.js" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

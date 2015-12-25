@@ -23,8 +23,8 @@ timw255.Sitefinity.ImageOptimization.FocalPointsExtension = function () {
     this._previewImage = null;
 
     this._focalCanvas = null;
-    this.ctx = null;
-    this._rect = {};
+    this._ctx = null;
+    this._selection = {};
     this._drag = false;
 
     this._item = null;
@@ -120,29 +120,40 @@ timw255.Sitefinity.ImageOptimization.FocalPointsExtension.prototype = {
         this._item = args.Item;
 
         this._ratio = this._item.Width / this._previewImage.width;
+        this._clear();
     },
 
     _previewImageLoaded: function (sender, args) {
         this._focalCanvas.width = this._previewImage.width;
         this._focalCanvas.height = this._previewImage.height;
 
-        this._ctx.clearRect(0, 0, this._focalCanvas.width, this._focalCanvas.height);
-
         if (this._item.FocalPointX !== null && this._item.FocalPointX != 0 && this._item.FocalPointY !== null && this._item.FocalPointY != 0) {
-            this._rect.startX = this._item.FocalPointX / this._ratio;
-            this._rect.startY = this._item.FocalPointY / this._ratio;
+            this._selection.startX = this._item.FocalPointX / this._ratio;
+            this._selection.startY = this._item.FocalPointY / this._ratio;
 
-            this._rect.w = this._item.FocalPointWidth / this._ratio;
-            this._rect.h = this._item.FocalPointHeight / this._ratio;
+            this._selection.w = this._item.FocalPointWidth / this._ratio;
+            this._selection.h = this._item.FocalPointHeight / this._ratio;
 
-            this._drawFocalMarker();
+            this._draw();
         }
     },
 
     _focalCanvasMouseDown: function (sender, args) {
-        this._rect.startX = sender.offsetX;
-        this._rect.startY = sender.offsetY;
-        this._drag = true;
+        var x = sender.offsetX,
+            y = sender.offsetY;
+        if (this._item.FocalPointX > 0 && this._item.FocalPointY > 0) {
+            if (this._isPointInFocalPointMarker(x, y)) {
+                this._cycleFocalPointAnchor();
+                this._draw();
+                return;
+            } else {
+                this._clearFocalPoint();
+                this._clear();
+            }
+        }
+
+        this._beginSelection(x, y);
+        
         event.preventDefault();
     },
 
@@ -156,55 +167,141 @@ timw255.Sitefinity.ImageOptimization.FocalPointsExtension.prototype = {
 
     _focalCanvasMouseMove: function (sender, args) {
         if (this._drag) {
-            this._rect.w = sender.offsetX - this._rect.startX;
-            this._rect.h = sender.offsetY - this._rect.startY;
-            
-            this._drawFocalMarker();
+
+            var w = sender.offsetX - this._selection.startX,
+                h = sender.offsetY - this._selection.startY;
+
+            this._selection.w = w;
+            this._selection.h = h;
+
+            this._draw();
         }
     },
     /* -------------------- private methods ----------- */
+    _cycleFocalPointAnchor: function () {
+        p = this._item.FocalPointAnchor + 1;
+        if (p > 4) {
+            p = 0;
+        }
+        this._setFocalPointAnchor(p);
+    },
+
+    _setFocalPoint: function (x, y, w, h) {
+        this._item.FocalPointX = x;
+        this._item.FocalPointY = y;
+        this._item.FocalPointWidth = w;
+        this._item.FocalPointHeight = h;
+    },
+
+    _setFocalPointAnchor: function (p) {
+        this._item.FocalPointAnchor = p;
+    },
+
+    _clearFocalPoint: function () {
+        this._setFocalPoint(0, 0, 0, 0);
+        this._setFocalPointAnchor(0);
+        this._selection = {};
+    },
+
+    _beginSelection: function (x, y) {
+        this._selection.startX = x;
+        this._selection.startY = y;
+        this._drag = true;
+    },
+
     _endSelection: function () {
         this._drag = false;
 
-        if (Math.abs(this._rect.w) < 25 || Math.abs(this._rect.h) < 25) {
-            this._ctx.clearRect(0, 0, this._focalCanvas.width, this._focalCanvas.height);
-
-            this._item.FocalPointX = 0;
-            this._item.FocalPointY = 0;
-
-            this._item.FocalPointWidth = 0;
-            this._item.FocalPointHeight = 0;
-
-            $('.sfPreviewVideoFrame .sfExample').text('Click and drag on the image above to set a focal point');
-
+        if (Math.abs(this._selection.w) < 25 || Math.abs(this._selection.h) < 25) {
+            this._clearFocalPoint();
+            this._clear();
             return;
         }
 
-        if (this._rect.w < 0 || this._rect.h < 0) {
-            this._item.FocalPointX = Math.ceil((this._rect.startX + this._rect.w) * this._ratio);
-            this._item.FocalPointY = Math.ceil((this._rect.startY + this._rect.h) * this._ratio);
-        } else {
-            this._item.FocalPointX = Math.ceil(this._rect.startX * this._ratio);
-            this._item.FocalPointY = Math.ceil(this._rect.startY * this._ratio);
-        }
-
-        this._item.FocalPointWidth = Math.abs(Math.ceil(this._rect.w * this._ratio));
-        this._item.FocalPointHeight = Math.abs(Math.ceil(this._rect.h * this._ratio));
-
-        $('.sfPreviewVideoFrame .sfExample').text('Click the focal point to remove it');
+        this._setFocalPoint(this._selection.startX * this._ratio, this._selection.startY * this._ratio, this._selection.w * this._ratio, this._selection.h * this._ratio);
+        this._draw();
     },
 
-    _drawFocalMarker: function () {
+    _isPointInFocalPointMarker: function (x, y) {
+        var isCollision = false;
+
+        var left = this._selection.startX,
+            right = this._selection.startX + this._selection.w;
+        var top = this._selection.startY,
+            bottom = this._selection.startY + this._selection.h;
+        if (right >= x
+            && left <= x
+            && bottom >= y
+            && top <= y) {
+            isCollision = true;
+        }
+
+        return isCollision;
+    },
+
+    _draw: function () {
+        this._clear();
+        this._drawFocalPoint();
+        this._drawFocalPointAnchor();
+    },
+
+    _clear: function() {
         this._ctx.clearRect(0, 0, this._focalCanvas.width, this._focalCanvas.height);
+    },
+
+    _drawFocalPoint: function () {
         this._ctx.beginPath();
         this._ctx.globalAlpha = 0.5;
-        this._ctx.rect(this._rect.startX, this._rect.startY, this._rect.w, this._rect.h);
+        this._ctx.rect(this._selection.startX, this._selection.startY, this._selection.w, this._selection.h);
         this._ctx.strokeStyle = 'rgba(0,0,0,0.9)';
         this._ctx.fillStyle = 'rgba(255,255,255,0.6)';
         this._ctx.lineWidth = 2;
         this._ctx.fill();
         this._ctx.stroke();
     },
+
+    _drawFocalPointAnchor: function () {
+        for (i = 0; i <= 4; i++) {
+            var x, y;
+
+            switch (i) {
+                case 0:
+                    x = this._selection.startX + (this._selection.w / 2);
+                    y = this._selection.startY + (this._selection.h / 2);
+                    break;
+                case 1:
+                    x = this._selection.startX + (this._selection.w / 2);
+                    y = this._selection.startY + 10;
+                    break;
+                case 2:
+                    x = this._selection.startX + (this._selection.w - 10);
+                    y = this._selection.startY + (this._selection.h / 2);
+                    break;
+                case 3:
+                    x = this._selection.startX + (this._selection.w / 2);
+                    y = this._selection.startY + (this._selection.h - 10);
+                    break;
+                case 4:
+                    x = this._selection.startX + 10;
+                    y = this._selection.startY + (this._selection.h / 2);
+                    break;
+            }
+
+            this._ctx.beginPath();
+            this._ctx.arc(x, y, 3, 0, 2 * Math.PI, false);
+
+            if (i == this._item.FocalPointAnchor) {
+                this._ctx.fillStyle = 'white';
+            } else {
+                this._ctx.fillStyle = 'black';
+            }
+
+            this._ctx.fill();
+            this._ctx.lineWidth = 1;
+            this._ctx.strokeStyle = '#000000';
+            this._ctx.stroke();
+        }
+    }
     /* -------------------- properties ---------------- */
 }
 timw255.Sitefinity.ImageOptimization.FocalPointsExtension.registerClass("timw255.Sitefinity.ImageOptimization.FocalPointsExtension", Sys.Component, Sys.IDisposable);

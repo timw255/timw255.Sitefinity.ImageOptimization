@@ -519,6 +519,37 @@ namespace timw255.Sitefinity.ImageOptimization
                     metaFieldAttributes.Add(metaFieldAttribute1);
                     metaType.Fields.Add(focalPointHeight);
                 }
+
+                MetaField focalPointAnchor = (
+                    from f in metaType.Fields
+                    where f.FieldName == "FocalPointAnchor"
+                    select f).FirstOrDefault<MetaField>();
+
+                if (focalPointAnchor == null)
+                {
+                    focalPointAnchor = managerInTransaction.CreateMetafield("FocalPointAnchor");
+                    focalPointAnchor.Title = "FocalPointAnchor";
+                    focalPointAnchor.ClrType = typeof(int).FullName;
+                    focalPointAnchor.ColumnName = "focal_point_anchor";
+                    focalPointAnchor.Required = false;
+                    focalPointAnchor.Hidden = true;
+                    focalPointAnchor.SetMinValue(0);
+                    IList<MetaFieldAttribute> metaAttributes = focalPointAnchor.MetaAttributes;
+                    MetaFieldAttribute metaFieldAttribute = new MetaFieldAttribute()
+                    {
+                        Name = "UserFriendlyDataType",
+                        Value = UserFriendlyDataType.Integer.ToString()
+                    };
+                    metaAttributes.Add(metaFieldAttribute);
+                    IList<MetaFieldAttribute> metaFieldAttributes = focalPointAnchor.MetaAttributes;
+                    MetaFieldAttribute metaFieldAttribute1 = new MetaFieldAttribute()
+                    {
+                        Name = "IsCommonProperty",
+                        Value = "true"
+                    };
+                    metaFieldAttributes.Add(metaFieldAttribute1);
+                    metaType.Fields.Add(focalPointAnchor);
+                }
             }
         }
         #endregion

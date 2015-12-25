@@ -41,3 +41,4 @@ using timw255.Sitefinity.ImageOptimization;
 [assembly: AssemblyFileVersion("1.0.0.0")]
 
 [assembly: WebResource("timw255.Sitefinity.ImageOptimization.Resources.AlbumExtensions.js", "application/x-javascript")]
+[assembly: WebResource("timw255.Sitefinity.ImageOptimization.Resources.SmartScaleCrop.png", "image/png")]

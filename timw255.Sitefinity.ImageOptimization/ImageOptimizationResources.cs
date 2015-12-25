@@ -86,6 +86,33 @@ namespace timw255.Sitefinity.ImageOptimization
                 return this["ImageOptimizationResourcesDescription"];
             }
         }
+
+        [ResourceEntry("PreserveFocalArea", Value = "Preserve focal area", Description = "word: Preserve focal area", LastModified = "2015/23/12")]
+        public string PreserveFocalArea
+        {
+            get
+            {
+                return base["PreserveFocalArea"];
+            }
+        }
+
+        [ResourceEntry("SmartScaleCropImageProcessorMethod", Value = "Smart scale and crop", Description = "Smart scale and crop", LastModified = "2015/24/12")]
+        public string SmartScaleCropImageProcessorMethod
+        {
+            get
+            {
+                return base["SmartScaleCropImageProcessorMethod"];
+            }
+        }
+
+        [ResourceEntry("SmartScaleCropSizeFormat", Value = "Smart scale and crop to {Width}x{Height}", Description = "Smart scale and crop to {Width}x{Height}", LastModified = "2015/24/12")]
+        public string SmartScaleCropSizeFormat
+        {
+            get
+            {
+                return base["SmartScaleCropSizeFormat"];
+            }
+        }
         #endregion
     }
 }
