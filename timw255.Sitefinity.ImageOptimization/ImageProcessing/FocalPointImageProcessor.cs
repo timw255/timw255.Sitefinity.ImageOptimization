@@ -74,9 +74,6 @@ namespace timw255.Sitefinity.ImageOptimization.ImageProcessing
             int cropX = focalPointX;
             int cropY = focalPointY;
 
-            int drawX = 0;
-            int drawY = 0;
-
             float s = 1;
             bool scaleDown = (focalPointWidth > args.Width) || (focalPointHeight > args.Height);
             bool scaleUp = ((focalPointWidth < args.Width) || (focalPointHeight < args.Height)) && args.ScaleUp;
@@ -101,22 +98,33 @@ namespace timw255.Sitefinity.ImageOptimization.ImageProcessing
             if (args.Width > scaledSource.Width)
             {
                 cropX = (scaledSource.Width - args.Width) / 2;
-
-                if (!args.PreserveFocalArea)
-                {
-                    drawX = 0;
-                }
             }
-            
+
             cropY = Math.Min(Math.Max((int)Math.Round(focalPointY * s + focalPointHeight * s / 2 - args.Height / 2, 0), 0), scaledSource.Height - args.Height);
 
             if (args.Height > scaledSource.Height)
             {
                 cropY = (scaledSource.Height - args.Height) / 2;
+            }
 
-                if (!args.PreserveFocalArea)
+            if (!args.PreserveFocalArea)
+            {
+                switch (focalPointAnchor)
                 {
-                    drawY = 0;
+                    case 0:
+                        break;
+                    case 1:
+                        cropY = focalPointY;
+                        break;
+                    case 2:
+                        cropX = Math.Max((focalPointX + focalPointWidth) - args.Width, 0);
+                        break;
+                    case 3:
+                        cropY = Math.Max((focalPointY + focalPointHeight) - args.Height, 0);
+                        break;
+                    case 4:
+                        cropX = focalPointX;
+                        break;
                 }
             }
 
@@ -126,7 +134,7 @@ namespace timw255.Sitefinity.ImageOptimization.ImageProcessing
 
             using (var gr = Graphics.FromImage(bmp))
             {
-                gr.DrawImage(scaledSource, new Rectangle(drawX, drawY, bmp.Width, bmp.Height), crop, GraphicsUnit.Pixel);
+                gr.DrawImage(scaledSource, new Rectangle(0, 0, bmp.Width, bmp.Height), crop, GraphicsUnit.Pixel);
             }
 
             return bmp;
