@@ -57,7 +57,7 @@ timw255.Sitefinity.ImageOptimization.FocalPointsExtension.prototype = {
         $addHandler(this._previewImage, "load", this._previewImageLoadedDelegate);
 
         $(this._previewImage).wrap("<div id='focalPointContainer' style='display:inline-block;position:relative;'></div>");
-        $('<canvas id="focalCanvas" style="width:100%;height:100%;position:absolute;top:0px;left:0px;z-index:20;"></canvas>').appendTo('#focalPointContainer');
+        $('<canvas id="focalCanvas" style="width:100%;height:100%;position:absolute;top:0px;left:0px;z-index:20;-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;"></canvas>').appendTo('#focalPointContainer');
 
         this._focalCanvas = $('#focalCanvas')[0];
 
@@ -218,7 +218,12 @@ timw255.Sitefinity.ImageOptimization.FocalPointsExtension.prototype = {
             return;
         }
 
-        this._setFocalPoint(this._selection.startX * this._ratio, this._selection.startY * this._ratio, this._selection.w * this._ratio, this._selection.h * this._ratio);
+        var x = Math.ceil(this._selection.startX * this._ratio),
+            y = Math.ceil(this._selection.startY * this._ratio),
+            w = Math.ceil(this._selection.w * this._ratio),
+            h = Math.ceil(this._selection.h * this._ratio);
+
+        this._setFocalPoint(x, y, w, h);
         this._draw();
     },
 
