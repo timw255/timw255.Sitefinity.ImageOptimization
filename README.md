@@ -15,6 +15,7 @@ Extendable OptimizerBase class so developers can create custom image optimizers
 Optimization with either ImageMagick (default) or Kraken.io
 
 Focal Points
+[See Focal Points in action on YouTube (1:16)](https://www.youtube.com/watch?v=IPIg6ddblU8)
 
 Thumbnail generation based on focal points
 
